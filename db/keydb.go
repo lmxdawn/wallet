@@ -6,7 +6,7 @@ type KeyDB struct {
 	db *leveldb.DB
 }
 
-func NewKeyDB(protocol string, file string) (*KeyDB, error) {
+func NewKeyDB(file string) (*KeyDB, error) {
 	db, err := leveldb.OpenFile(file, nil)
 	if err != nil {
 		return nil, err

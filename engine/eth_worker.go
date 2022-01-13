@@ -17,14 +17,14 @@ import (
 )
 
 type EthWorker struct {
-	Confirms uint64 // 需要的确认数
+	confirms uint64 // 需要的确认数
 	client   *ethclient.Client
 }
 
 func NewEthWorker(confirms uint64, url string) *EthWorker {
 	client, _ := ethclient.Dial(url)
 	return &EthWorker{
-		Confirms: confirms,
+		confirms: confirms,
 		client:   client,
 	}
 }
@@ -46,7 +46,7 @@ func (e *EthWorker) getTransactionReceipt(transaction *types.Transaction) error 
 
 	// 判断确认数
 	confirms := latest - receipt.BlockNumber.Uint64() + 1
-	if confirms < e.Confirms {
+	if confirms < e.confirms {
 		return errors.New("the number of confirmations is not satisfied")
 	}
 

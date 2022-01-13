@@ -168,16 +168,23 @@ func (c *ConCurrentEngine) GetTransactionReceipt(hash string) (int, error) {
 	return int(t.Status), nil
 }
 
-// NewEthEngine 创建ETH
-func NewEthEngine(config config.EngineConfig) (*ConCurrentEngine, error) {
-	keyDB, err := db.NewKeyDB(config.Protocol, config.File)
+// NewEngine 创建ETH
+func NewEngine(config config.EngineConfig) (*ConCurrentEngine, error) {
+	keyDB, err := db.NewKeyDB(config.File)
 	if err != nil {
 		return nil, err
 	}
+
+	var worker Worker
+	switch config.Protocol {
+	case "eth":
+		worker = NewEthWorker(config.Confirms, config.Rpc)
+	}
+
 	return &ConCurrentEngine{
 		//scheduler: scheduler.NewSimpleScheduler(), // 简单的任务调度器
 		scheduler: scheduler.NewQueueScheduler(), // 队列的任务调度器
-		Worker:    NewEthWorker(config.Confirms, config.Rpc),
+		Worker:    worker,
 		config:    config,
 		Protocol:  config.Protocol,
 		db:        keyDB,

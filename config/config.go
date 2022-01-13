@@ -10,6 +10,7 @@ type AppConfig struct {
 }
 
 type EngineConfig struct {
+	Name               string `yaml:"name"`                 // 名称
 	Protocol           string `yaml:"protocol"`             // 协议名称
 	Rpc                string `yaml:"server"`               // rpc配置
 	File               string `yaml:"file"`                 // db文件配置

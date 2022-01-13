@@ -20,7 +20,7 @@ func Start(configPath string) {
 
 	var engines []*engine.ConCurrentEngine
 	for _, engineConfig := range conf.Engines {
-		eth, err := engine.NewEthEngine(engineConfig)
+		eth, err := engine.NewEngine(engineConfig)
 		if err != nil {
 			panic(fmt.Sprintf("eth run err：%v", err))
 		}
