@@ -13,7 +13,7 @@ $ cd wallet
 $ go build
 
 # 运行
-$ wallet -c config/config.yml
+$ wallet -c config/config-example.yml
 
 ```
 

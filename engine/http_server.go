@@ -10,15 +10,23 @@ import (
 	"net/url"
 )
 
-type Http struct {
-	url string // 请求地址
+type HttpServer struct {
+	name string // 协议名称
+	url  string // 请求地址
+}
+
+func NewHttpServer(name string, url string) *HttpServer {
+	return &HttpServer{
+		name: name,
+		url:  url,
+	}
 }
 
 // GetAddressCount 获取需要生成地址的数量
-func (h *Http) GetAddressCount(name string) (int, error) {
+func (h *HttpServer) GetAddressCount() (int, error) {
 
 	params := url.Values{}
-	params.Set("name", name)
+	params.Set("name", h.name)
 
 	var res types.AddressCountRes
 	err := h.get(params, &res)
@@ -33,9 +41,10 @@ func (h *Http) GetAddressCount(name string) (int, error) {
 }
 
 // PostAddress 发送已经生成的地址列表
-func (h *Http) PostAddress(name string, addressArr []string) error {
+func (h *HttpServer) PostAddress(addressArr []string) error {
 
 	data := make(map[string]interface{})
+	data["name"] = h.name
 	data["addressArr"] = addressArr
 
 	var res types.Response
@@ -52,9 +61,10 @@ func (h *Http) PostAddress(name string, addressArr []string) error {
 }
 
 // PostRechargeSuccess 发送充值成功的数据
-func (h *Http) PostRechargeSuccess(name string, from string, to string, value uint64) error {
+func (h *HttpServer) PostRechargeSuccess(from string, to string, value uint64) error {
 
 	data := make(map[string]interface{})
+	data["name"] = h.name
 	data["from"] = from
 	data["to"] = to
 	data["value"] = value
@@ -73,10 +83,10 @@ func (h *Http) PostRechargeSuccess(name string, from string, to string, value ui
 }
 
 // GetWithdraw 获取提现列表
-func (h *Http) GetWithdraw(name string) ([]types.WithdrawRes, error) {
+func (h *HttpServer) GetWithdraw() ([]types.WithdrawRes, error) {
 
 	params := url.Values{}
-	params.Set("name", name)
+	params.Set("name", h.name)
 
 	var res types.WithdrawListRes
 	err := h.get(params, &res)
@@ -92,10 +102,10 @@ func (h *Http) GetWithdraw(name string) ([]types.WithdrawRes, error) {
 }
 
 // PostWithdrawSuccess 发送提现成功数据
-func (h *Http) PostWithdrawSuccess(name string, orderId string, address string) error {
+func (h *HttpServer) PostWithdrawSuccess(orderId string, address string) error {
 
 	data := make(map[string]interface{})
-	data["name"] = name
+	data["name"] = h.name
 	data["orderId"] = orderId
 	data["address"] = address
 
@@ -113,7 +123,7 @@ func (h *Http) PostWithdrawSuccess(name string, orderId string, address string) 
 }
 
 // get 请求
-func (h *Http) get(params url.Values, res interface{}) error {
+func (h *HttpServer) get(params url.Values, res interface{}) error {
 
 	Url, err := url.Parse(h.url)
 	if err != nil {
@@ -138,7 +148,7 @@ func (h *Http) get(params url.Values, res interface{}) error {
 }
 
 // post 请求
-func (h *Http) post(data map[string]interface{}, res interface{}) error {
+func (h *HttpServer) post(data map[string]interface{}, res interface{}) error {
 	bytesData, err := json.Marshal(data)
 	if err != nil {
 		return err

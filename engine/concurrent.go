@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/lmxdawn/wallet/config"
 	"github.com/lmxdawn/wallet/db"
 	"github.com/lmxdawn/wallet/scheduler"
 	"github.com/lmxdawn/wallet/types"
@@ -9,14 +10,14 @@ import (
 )
 
 type Worker interface {
-	getTransaction(int64) ([]types.Transaction, error)
+	getTransaction(uint64) ([]types.Transaction, error)
 	getTransactionReceipt(*types.Transaction) error
 }
 
 type Scheduler interface {
-	BlockWorkerChan() chan int64
-	BlockWorkerReady(chan int64)
-	BlockSubmit(int64)
+	BlockWorkerChan() chan uint64
+	BlockWorkerReady(chan uint64)
+	BlockSubmit(uint64)
 	BlockRun()
 	ReceiptWorkerChan() chan types.Transaction
 	ReceiptWorkerReady(chan types.Transaction)
@@ -25,17 +26,14 @@ type Scheduler interface {
 }
 
 type ConCurrentEngine struct {
-	scheduler          Scheduler
-	worker             Worker
-	db                 db.Database
-	blockWorkerCount   int // 区块worker数量
-	blockAfterTime     int // 获取最新块的等待时间
-	receiptWorkerCount int // 交易凭证worker数量
-	receiptAfterTime   int // 获取交易信息的等待时间
+	scheduler Scheduler
+	worker    Worker
+	db        db.Database
+	config    config.EngineConfig
 }
 
 // Run 启动
-func (c *ConCurrentEngine) Run(blockNumber int64) {
+func (c *ConCurrentEngine) Run() {
 	// 关闭连接
 	defer c.db.Close()
 
@@ -46,16 +44,16 @@ func (c *ConCurrentEngine) Run(blockNumber int64) {
 	c.scheduler.ReceiptRun()
 
 	// 批量创建区块worker
-	for i := 0; i < c.blockWorkerCount; i++ {
+	for i := uint64(0); i < c.config.BlockCount; i++ {
 		c.createBlockWorker(blockWorkerOut)
 	}
 
 	// 批量创建交易worker
-	for i := 0; i < c.receiptWorkerCount; i++ {
+	for i := uint64(0); i < c.config.ReceiptCount; i++ {
 		c.createReceiptWorker()
 	}
 
-	c.scheduler.BlockSubmit(blockNumber)
+	c.scheduler.BlockSubmit(c.config.BlockInit)
 
 	for {
 		transaction := <-blockWorkerOut
@@ -75,8 +73,8 @@ func (c *ConCurrentEngine) createBlockWorker(out chan types.Transaction) {
 			log.Info().Msgf("获取区块：%d", num)
 			transactions, err := c.worker.getTransaction(num)
 			if err != nil {
-				log.Info().Msgf("wait %d seconds, the latest block is not obtained", c.blockAfterTime)
-				<-time.After(time.Duration(c.blockAfterTime) * time.Second)
+				log.Info().Msgf("wait %d seconds, the latest block is not obtained", c.config.BlockAfterTime)
+				<-time.After(time.Duration(c.config.BlockAfterTime) * time.Second)
 				c.scheduler.BlockSubmit(num)
 				continue
 			}
@@ -97,8 +95,8 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 			transaction := <-in
 			err := c.worker.getTransactionReceipt(&transaction)
 			if err != nil {
-				log.Info().Msgf("wait %d seconds, the receipt information is invalid, err: %v", c.receiptAfterTime, err)
-				<-time.After(time.Duration(c.receiptAfterTime) * time.Second)
+				log.Info().Msgf("wait %d seconds, the receipt information is invalid, err: %v", c.config.ReceiptAfterTime, err)
+				<-time.After(time.Duration(c.config.ReceiptAfterTime) * time.Second)
 				c.scheduler.ReceiptSubmit(transaction)
 				continue
 			}
@@ -120,15 +118,16 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 }
 
 // NewEthEngine 创建ETH
-func NewEthEngine(blockCount int, receiptCount int, confirms uint64, url string, keyDB *db.KeyDB) *ConCurrentEngine {
+func NewEthEngine(config config.EngineConfig) (*ConCurrentEngine, *db.KeyDB, error) {
+	keyDB, err := db.NewKeyDB(config.Protocol, config.File)
+	if err != nil {
+		return nil, nil, err
+	}
 	return &ConCurrentEngine{
 		//scheduler: scheduler.NewSimpleScheduler(), // 简单的任务调度器
 		scheduler:          scheduler.NewQueueScheduler(), // 队列的任务调度器
-		worker:             NewEthWorker(confirms, url),
+		worker:             NewEthWorker(config.Confirms, config.Rpc),
 		db:                 keyDB,
-		blockWorkerCount:   blockCount,
-		blockAfterTime:     3,
-		receiptWorkerCount: receiptCount,
-		receiptAfterTime:   2,
-	}
+		config: config,
+	}, keyDB, nil
 }

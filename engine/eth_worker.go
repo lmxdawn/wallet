@@ -50,8 +50,8 @@ func (e *EthWorker) getTransactionReceipt(transaction *types.Transaction) error 
 	return nil
 }
 
-func (e *EthWorker) getTransaction(num int64) ([]types.Transaction, error) {
-	block, err := e.client.BlockByNumber(context.Background(), big.NewInt(num))
+func (e *EthWorker) getTransaction(num uint64) ([]types.Transaction, error) {
+	block, err := e.client.BlockByNumber(context.Background(), big.NewInt(int64(num)))
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (e *EthWorker) getTransaction(num int64) ([]types.Transaction, error) {
 			continue
 		}
 		transactions = append(transactions, types.Transaction{
-			BlockNumber: big.NewInt(num),
+			BlockNumber: big.NewInt(int64(num)),
 			BlockHash:   block.Hash().Hex(),
 			Hash:        tx.Hash().Hex(),
 			From:        msg.From().Hex(),

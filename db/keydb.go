@@ -3,17 +3,19 @@ package db
 import "github.com/syndtr/goleveldb/leveldb"
 
 type KeyDB struct {
-	db *leveldb.DB
+	Protocol string // 协议名称
+	db       *leveldb.DB
 }
 
-func NewKeyDB(file string) (*KeyDB, error) {
+func NewKeyDB(protocol string, file string) (*KeyDB, error) {
 	db, err := leveldb.OpenFile(file, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return &KeyDB{
-		db: db,
+		Protocol: protocol,
+		db:       db,
 	}, nil
 }
 

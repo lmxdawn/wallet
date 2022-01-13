@@ -1,0 +1,25 @@
+app:
+  port: 10001
+engine:
+  - protocol: eth
+    rpc: https://mainnet.infura.io/v3/adee4ead47844d238802431fcb7683c6
+    file: path/to/db
+    block_init: 1
+    block_count: 1
+    block_after_time: 1
+    receipt_count: 1
+    receipt_after_time: 1
+    confirms: 1
+    recharge_notify_url: https://mainnet.infura.io
+    withdraw_notify_url: https://mainnet.infura.io
+  - protocol: ethErc20
+    rpc: https://mainnet.infura.io/v3/adee4ead47844d238802431fcb7683c6
+    file: path/to/db
+    block_init: 1
+    block_count: 1
+    block_after_time: 1
+    receipt_count: 1
+    receipt_after_time: 1
+    confirms: 1
+    recharge_notify_url: https://mainnet.infura.io
+    withdraw_notify_url: https://mainnet.infura.io

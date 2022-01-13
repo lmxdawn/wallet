@@ -1,24 +1,21 @@
 package main
 
 import (
-	"github.com/lmxdawn/wallet/db"
 	"github.com/lmxdawn/wallet/engine"
+	"github.com/rs/zerolog/log"
 )
 
 func Start() error {
-	url := "https://mainnet.infura.io/v3/adee4ead47844d238802431fcb7683c6"
-	ethDB, err := db.NewKeyDB("path/to/db")
+	rpcUrl := "https://mainnet.infura.io/v3/adee4ead47844d238802431fcb7683c6"
+	httpUrl := "https://mainnet.infura.io"
+	eth, err := engine.NewEthEngine("eth", rpcUrl, httpUrl, "path/to/db", 1, 1, 12)
 	if err != nil {
-		return err
+		log.Error().Msgf("eth run err：%v", err)
 	}
-
-	ethErc20DB, err := db.NewKeyDB("path/to/db")
+	ethErc20, err := engine.NewEthEngine("eth", rpcUrl, httpUrl, "path/to/db", 1, 1, 12)
 	if err != nil {
-		return err
+		log.Error().Msgf("eth run err：%v", err)
 	}
-
-	eth := engine.NewEthEngine(1, 1, 12, url, ethDB)
-	ethErc20 := engine.NewEthEngine(1, 1, 12, url, ethErc20DB)
 
 	num := int64(13969128)
 

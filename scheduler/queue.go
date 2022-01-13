@@ -6,8 +6,8 @@ import (
 
 // QueueScheduler 队列的调度器
 type QueueScheduler struct {
-	blockNum       chan int64      // 区块的通道
-	blockNumWorker chan chan int64 // 区块worker的通道
+	blockNum       chan uint64      // 区块的通道
+	blockNumWorker chan chan uint64 // 区块worker的通道
 	receipt        chan types.Transaction
 	receiptWorker  chan chan types.Transaction
 }
@@ -16,27 +16,27 @@ func NewQueueScheduler() *QueueScheduler {
 	return &QueueScheduler{}
 }
 
-func (q *QueueScheduler) BlockWorkerChan() chan int64 {
-	return make(chan int64)
+func (q *QueueScheduler) BlockWorkerChan() chan uint64 {
+	return make(chan uint64)
 }
 
-func (q *QueueScheduler) BlockWorkerReady(w chan int64) {
+func (q *QueueScheduler) BlockWorkerReady(w chan uint64) {
 	q.blockNumWorker <- w
 }
 
-func (q *QueueScheduler) BlockSubmit(blockNum int64) {
+func (q *QueueScheduler) BlockSubmit(blockNum uint64) {
 	q.blockNum <- blockNum
 }
 
 func (q *QueueScheduler) BlockRun() {
-	q.blockNum = make(chan int64)
-	q.blockNumWorker = make(chan chan int64)
+	q.blockNum = make(chan uint64)
+	q.blockNumWorker = make(chan chan uint64)
 	go func() {
-		var nQ []int64
-		var nWQ []chan int64
+		var nQ []uint64
+		var nWQ []chan uint64
 		for {
-			var activateN int64
-			var activateNW chan int64
+			var activateN uint64
+			var activateNW chan uint64
 			if len(nQ) > 0 && len(nWQ) > 0 {
 				activateN = nQ[0]
 				activateNW = nWQ[0]
