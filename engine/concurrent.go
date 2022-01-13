@@ -12,6 +12,8 @@ import (
 type Worker interface {
 	getTransaction(uint64) ([]types.Transaction, error)
 	getTransactionReceipt(*types.Transaction) error
+	createWallet() (*types.Wallet, error)
+	sendTransaction(string, string, int64, int) (string, error)
 }
 
 type Scheduler interface {
@@ -27,9 +29,10 @@ type Scheduler interface {
 
 type ConCurrentEngine struct {
 	scheduler Scheduler
-	worker    Worker
-	db        db.Database
+	Worker    Worker
 	config    config.EngineConfig
+	Protocol  string
+	db        db.Database
 }
 
 // Run 启动
@@ -71,7 +74,7 @@ func (c *ConCurrentEngine) createBlockWorker(out chan types.Transaction) {
 			c.scheduler.BlockWorkerReady(in)
 			num := <-in
 			log.Info().Msgf("获取区块：%d", num)
-			transactions, err := c.worker.getTransaction(num)
+			transactions, err := c.Worker.getTransaction(num)
 			if err != nil {
 				log.Info().Msgf("wait %d seconds, the latest block is not obtained", c.config.BlockAfterTime)
 				<-time.After(time.Duration(c.config.BlockAfterTime) * time.Second)
@@ -93,7 +96,7 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 		for {
 			c.scheduler.ReceiptWorkerReady(in)
 			transaction := <-in
-			err := c.worker.getTransactionReceipt(&transaction)
+			err := c.Worker.getTransactionReceipt(&transaction)
 			if err != nil {
 				log.Info().Msgf("wait %d seconds, the receipt information is invalid, err: %v", c.config.ReceiptAfterTime, err)
 				<-time.After(time.Duration(c.config.ReceiptAfterTime) * time.Second)
@@ -117,17 +120,66 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 	}()
 }
 
+// CreateWallet 创建钱包
+func (c *ConCurrentEngine) CreateWallet() (string, error) {
+	wallet, err := c.Worker.createWallet()
+	if err != nil {
+		return "", err
+	}
+	_ = c.db.Put(wallet.Address, wallet.PrivateKey)
+	return wallet.Address, nil
+}
+
+// DeleteWallet 删除钱包
+func (c *ConCurrentEngine) DeleteWallet(address string) error {
+	err := c.db.Delete(address)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// SendTransaction 发送交易
+func (c *ConCurrentEngine) SendTransaction(orderId string, toAddress string, value int64) (string, error) {
+	hash, err := c.Worker.sendTransaction(c.config.WithdrawPrivateKey, toAddress, value, c.config.Decimals)
+	if err != nil {
+		return "", err
+	}
+	_ = c.db.Put(hash, orderId)
+	return hash, nil
+}
+
+// GetTransactionReceipt 获取交易状态
+func (c *ConCurrentEngine) GetTransactionReceipt(hash string) (int, error) {
+
+	t := &types.Transaction{
+		Hash:   hash,
+		Status: 0,
+	}
+
+	err := c.Worker.getTransactionReceipt(t)
+	if err != nil {
+		return 0, err
+	}
+	if t.Status == 1 {
+
+	}
+
+	return int(t.Status), nil
+}
+
 // NewEthEngine 创建ETH
-func NewEthEngine(config config.EngineConfig) (*ConCurrentEngine, *db.KeyDB, error) {
+func NewEthEngine(config config.EngineConfig) (*ConCurrentEngine, error) {
 	keyDB, err := db.NewKeyDB(config.Protocol, config.File)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	return &ConCurrentEngine{
 		//scheduler: scheduler.NewSimpleScheduler(), // 简单的任务调度器
-		scheduler:          scheduler.NewQueueScheduler(), // 队列的任务调度器
-		worker:             NewEthWorker(config.Confirms, config.Rpc),
-		db:                 keyDB,
-		config: config,
-	}, keyDB, nil
+		scheduler: scheduler.NewQueueScheduler(), // 队列的任务调度器
+		Worker:    NewEthWorker(config.Confirms, config.Rpc),
+		config:    config,
+		Protocol:  config.Protocol,
+		db:        keyDB,
+	}, nil
 }

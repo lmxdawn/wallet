@@ -1,4 +1,4 @@
-package rpc
+package server
 
 import (
 	"github.com/gin-gonic/gin"
@@ -23,4 +23,16 @@ func APIResponse(Ctx *gin.Context, err error, data interface{}) {
 		Message: message,
 		Data:    data,
 	})
+}
+
+type CreateWalletRes struct {
+	Address string `json:"address"` // 生成的钱包地址
+}
+
+type WithdrawRes struct {
+	Hash string `json:"hash"` // 生成的交易hash
+}
+
+type TransactionReceiptRes struct {
+	Status int `json:"status"` // 交易状态（0：未成功，1：已成功）
 }

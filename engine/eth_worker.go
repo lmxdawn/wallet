@@ -2,11 +2,17 @@ package engine
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"encoding/hex"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/lmxdawn/wallet/types"
+	"math"
 	"math/big"
 )
 
@@ -81,4 +87,100 @@ func (e *EthWorker) getTransaction(num uint64) ([]types.Transaction, error) {
 		})
 	}
 	return transactions, nil
+}
+
+func (e *EthWorker) createWallet() (*types.Wallet, error) {
+	privateKey, err := crypto.GenerateKey()
+	if err != nil {
+		return nil, err
+	}
+
+	privateKeyBytes := crypto.FromECDSA(privateKey)
+
+	privateKeyString := hexutil.Encode(privateKeyBytes)[2:]
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return nil, errors.New("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+	}
+
+	publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
+	publicKeyString := hexutil.Encode(publicKeyBytes)[4:]
+
+	address := crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+
+	return &types.Wallet{
+		Address:    address,
+		PublicKey:  publicKeyString,
+		PrivateKey: privateKeyString,
+	}, err
+}
+
+// sendTransaction 创建并发送裸交易
+func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amount int64, decimals int) (string, error) {
+
+	privateKey, err := crypto.HexToECDSA(privateKeyStr)
+	if err != nil {
+		return "", err
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return "", errors.New("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+	}
+
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+	nonce, err := e.client.PendingNonceAt(context.Background(), fromAddress)
+	if err != nil {
+		return "", err
+	}
+
+	value := big.NewInt(amount * int64(math.Pow10(decimals))) // in wei (1 eth)
+	gasLimit := uint64(21000)                // in units
+	gasPrice, err := e.client.SuggestGasPrice(context.Background())
+	if err != nil {
+		return "", err
+	}
+
+	toAddressHex := common.HexToAddress(toAddress)
+	var data []byte
+	txData := &ethTypes.LegacyTx{
+		Nonce:    nonce,
+		To:       &toAddressHex,
+		Value:    value,
+		Gas:      gasLimit,
+		GasPrice: gasPrice,
+		Data:     data,
+	}
+	tx := ethTypes.NewTx(txData)
+
+	chainID, err := e.client.NetworkID(context.Background())
+	if err != nil {
+		return "", err
+	}
+
+	signTx, err := ethTypes.SignTx(tx, ethTypes.NewEIP155Signer(chainID), privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	rawTxBytes, err := rlp.EncodeToBytes(signTx)
+	if err != nil {
+		return "", err
+	}
+	rawTxHex := hex.EncodeToString(rawTxBytes)
+
+	txSend := new(ethTypes.Transaction)
+	err = rlp.DecodeBytes(rawTxBytes, &txSend)
+	if err != nil {
+		return "", err
+	}
+	err = e.client.SendTransaction(context.Background(), txSend)
+	if err != nil {
+		return "", err
+	}
+
+	return rawTxHex, nil
 }

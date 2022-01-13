@@ -1,4 +1,4 @@
-package rpc
+package server
 
 import "fmt"
 
@@ -11,6 +11,7 @@ var (
 	ErrNotData          = &Errno{Code: 10004, Message: "没有数据"}
 	ErrNotChangeData    = &Errno{Code: 10005, Message: "数据没有更改"}
 	ErrNotRepeatData    = &Errno{Code: 10006, Message: "数据已存在"}
+	ErrCreateWallet    = &Errno{Code: 10007, Message: "创建钱包失败"}
 )
 
 // Errno ...

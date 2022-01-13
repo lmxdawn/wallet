@@ -1,10 +1,9 @@
-package rpc
+package server
 
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/lmxdawn/wallet/config"
-	"github.com/lmxdawn/wallet/db"
 	"github.com/lmxdawn/wallet/engine"
 )
 
@@ -20,14 +19,12 @@ func Start(configPath string) {
 	}
 
 	var engines []*engine.ConCurrentEngine
-	var dbs []*db.KeyDB
 	for _, engineConfig := range conf.Engines {
-		eth, keyDb, err := engine.NewEthEngine(engineConfig)
+		eth, err := engine.NewEthEngine(engineConfig)
 		if err != nil {
 			panic(fmt.Sprintf("eth run err：%v", err))
 		}
 		engines = append(engines, eth)
-		dbs = append(dbs, keyDb)
 	}
 
 	for _, currentEngine := range engines {
@@ -39,11 +36,14 @@ func Start(configPath string) {
 	// 中间件
 	server.Use(gin.Logger())
 	server.Use(gin.Recovery())
-	server.Use(SetDB(dbs...))
+	server.Use(SetDB(engines...))
 
 	auth := server.Group("/api", AuthRequired())
 	{
 		auth.GET("/createWallet", CreateWallet)
+		auth.GET("/delWallet", DelWallet)
+		auth.GET("/withdraw", Withdraw)
+		auth.GET("/getTransactionReceipt", GetTransactionReceipt)
 	}
 
 	err = server.Run(fmt.Sprintf(":%v", conf.App.Port))

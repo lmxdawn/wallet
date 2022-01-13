@@ -3,8 +3,7 @@ package db
 import "github.com/syndtr/goleveldb/leveldb"
 
 type KeyDB struct {
-	Protocol string // 协议名称
-	db       *leveldb.DB
+	db *leveldb.DB
 }
 
 func NewKeyDB(protocol string, file string) (*KeyDB, error) {
@@ -14,8 +13,7 @@ func NewKeyDB(protocol string, file string) (*KeyDB, error) {
 	}
 
 	return &KeyDB{
-		Protocol: protocol,
-		db:       db,
+		db: db,
 	}, nil
 }
 

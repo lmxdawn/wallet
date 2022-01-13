@@ -2,6 +2,12 @@ package types
 
 import "math/big"
 
+type Wallet struct {
+	Address    string
+	PublicKey  string
+	PrivateKey string
+}
+
 type Transaction struct {
 	BlockNumber *big.Int // 区块号
 	BlockHash   string   // 区块哈希

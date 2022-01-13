@@ -12,6 +12,8 @@ engine:
     confirms: 1
     recharge_notify_url: https://mainnet.infura.io
     withdraw_notify_url: https://mainnet.infura.io
+    withdraw_private_key: dfxdsfsdf
+    decimals: 18
   - protocol: ethErc20
     rpc: https://mainnet.infura.io/v3/adee4ead47844d238802431fcb7683c6
     file: path/to/db
@@ -23,3 +25,5 @@ engine:
     confirms: 1
     recharge_notify_url: https://mainnet.infura.io
     withdraw_notify_url: https://mainnet.infura.io
+    withdraw_private_key: dfxdsfsdf
+    decimals: 18
