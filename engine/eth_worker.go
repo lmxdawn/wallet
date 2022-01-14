@@ -19,13 +19,15 @@ import (
 
 type EthWorker struct {
 	confirms uint64 // 需要的确认数
+	contract string // 代币合约地址，为空表示主币
 	http     *ethclient.Client
 }
 
-func NewEthWorker(confirms uint64, url string) *EthWorker {
+func NewEthWorker(confirms uint64, contract string, url string) *EthWorker {
 	http := client.NewEthClient(url)
 	return &EthWorker{
 		confirms: confirms,
+		contract: contract,
 		http:     http,
 	}
 }

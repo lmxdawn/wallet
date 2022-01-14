@@ -161,9 +161,6 @@ func (c *ConCurrentEngine) GetTransactionReceipt(hash string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	if t.Status == 1 {
-
-	}
 
 	return int(t.Status), nil
 }
@@ -178,7 +175,7 @@ func NewEngine(config config.EngineConfig) (*ConCurrentEngine, error) {
 	var worker Worker
 	switch config.Protocol {
 	case "eth":
-		worker = NewEthWorker(config.Confirms, config.Rpc)
+		worker = NewEthWorker(config.Confirms, config.Contract, config.Rpc)
 	}
 
 	return &ConCurrentEngine{
