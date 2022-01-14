@@ -2,7 +2,6 @@ package config
 
 import (
 	"github.com/jinzhu/configor"
-	"github.com/pkg/errors"
 )
 
 type AppConfig struct {
@@ -11,8 +10,9 @@ type AppConfig struct {
 
 type EngineConfig struct {
 	Name               string `yaml:"name"`                 // 名称
+	Contract           string `yaml:"contract"`             // 合约地址（为空表示主币）
 	Protocol           string `yaml:"protocol"`             // 协议名称
-	Rpc                string `yaml:"server"`               // rpc配置
+	Rpc                string `yaml:"rpc"`                  // rpc配置
 	File               string `yaml:"file"`                 // db文件配置
 	BlockInit          uint64 `yaml:"block_init"`           // 初始块
 	BlockCount         uint64 `yaml:"block_count"`          // 区块worker数量
@@ -36,12 +36,12 @@ func NewConfig(confPath string) (Config, error) {
 	if confPath != "" {
 		err := configor.Load(&config, confPath)
 		if err != nil {
-			return config, errors.WithStack(err)
+			return config, err
 		}
 	} else {
 		err := configor.Load(&config, "config/config-example.yml")
 		if err != nil {
-			return config, errors.WithStack(err)
+			return config, err
 		}
 	}
 	return config, nil

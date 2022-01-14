@@ -1,11 +1,12 @@
 app:
   port: 10001
-engine:
+engines:
   - name: ETH
+    contract:
     protocol: eth
     rpc: https://mainnet.infura.io/v3/adee4ead47844d238802431fcb7683c6
-    file: path/to/db
-    block_init: 1
+    file: data/eth
+    block_init: 14000513
     block_count: 1
     block_after_time: 1
     receipt_count: 1
@@ -15,11 +16,12 @@ engine:
     withdraw_notify_url: https://mainnet.infura.io
     withdraw_private_key: dfxdsfsdf
     decimals: 18
-  - name: ETH-Erc20
+  - name: Tether USD
+    contract: 0xdac17f958d2ee523a2206206994597c13d831ec7
     protocol: eth
     rpc: https://mainnet.infura.io/v3/adee4ead47844d238802431fcb7683c6
-    file: path/to/db
-    block_init: 1
+    file: data/usdt
+    block_init: 14000513
     block_count: 1
     block_after_time: 1
     receipt_count: 1
