@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/lmxdawn/wallet/client"
 	"github.com/lmxdawn/wallet/types"
 	"math"
 	"math/big"
@@ -18,14 +19,14 @@ import (
 
 type EthWorker struct {
 	confirms uint64 // 需要的确认数
-	client   *ethclient.Client
+	http     *ethclient.Client
 }
 
 func NewEthWorker(confirms uint64, url string) *EthWorker {
-	client, _ := ethclient.Dial(url)
+	http := client.NewEthClient(url)
 	return &EthWorker{
 		confirms: confirms,
-		client:   client,
+		http:     http,
 	}
 }
 
@@ -33,13 +34,13 @@ func (e *EthWorker) getTransactionReceipt(transaction *types.Transaction) error 
 
 	hash := common.HexToHash(transaction.Hash)
 
-	receipt, err := e.client.TransactionReceipt(context.Background(), hash)
+	receipt, err := e.http.TransactionReceipt(context.Background(), hash)
 	if err != nil {
 		return err
 	}
 
 	// 获取最新区块
-	latest, err := e.client.BlockNumber(context.Background())
+	latest, err := e.http.BlockNumber(context.Background())
 	if err != nil {
 		return err
 	}
@@ -57,13 +58,13 @@ func (e *EthWorker) getTransactionReceipt(transaction *types.Transaction) error 
 }
 
 func (e *EthWorker) getTransaction(num uint64) ([]types.Transaction, error) {
-	block, err := e.client.BlockByNumber(context.Background(), big.NewInt(int64(num)))
+	block, err := e.http.BlockByNumber(context.Background(), big.NewInt(int64(num)))
 	if err != nil {
 		return nil, err
 	}
 	var transactions []types.Transaction
 
-	chainID, err := e.client.NetworkID(context.Background())
+	chainID, err := e.http.NetworkID(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -132,14 +133,14 @@ func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amou
 	}
 
 	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-	nonce, err := e.client.PendingNonceAt(context.Background(), fromAddress)
+	nonce, err := e.http.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
 		return "", err
 	}
 
 	value := big.NewInt(amount * int64(math.Pow10(decimals))) // in wei (1 eth)
-	gasLimit := uint64(21000)                // in units
-	gasPrice, err := e.client.SuggestGasPrice(context.Background())
+	gasLimit := uint64(21000)                                 // in units
+	gasPrice, err := e.http.SuggestGasPrice(context.Background())
 	if err != nil {
 		return "", err
 	}
@@ -156,7 +157,7 @@ func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amou
 	}
 	tx := ethTypes.NewTx(txData)
 
-	chainID, err := e.client.NetworkID(context.Background())
+	chainID, err := e.http.NetworkID(context.Background())
 	if err != nil {
 		return "", err
 	}
@@ -177,7 +178,7 @@ func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amou
 	if err != nil {
 		return "", err
 	}
-	err = e.client.SendTransaction(context.Background(), txSend)
+	err = e.http.SendTransaction(context.Background(), txSend)
 	if err != nil {
 		return "", err
 	}
