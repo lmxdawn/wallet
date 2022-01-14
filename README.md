@@ -10,12 +10,25 @@
 $ git clone https://github.com/lmxdawn/wallet.git
 $ cd wallet
 
-$ go build
+# 打包 (-tags "doc") 可选，加上可以运行swagger
+$ go build [-tags "doc"]
 
 # 运行
-$ wallet -c config/config-example.yml
+$ wallet -c config/config.yml
 
 ```
+
+# Swagger
+
+> 把 swag cmd 包下载 `go get -u github.com/swaggo/swag/cmd/swag`
+
+> 这时会在 bin 目录下生成一个 `swag.exe` ，把这个执行文件放到 `$GOPATH/bin` 下面
+
+> 执行 `swag init` 注意，一定要和main.go处于同一级目录
+
+> 启动时加上 `-tags "doc"` 才会启动swagger。 这里主要为了正式环境去掉 swagger，这样整体编译的包小一些
+
+> 启动后访问： `http://ip:prot/swagger/index.html`
 
 # 第三方库依赖
 

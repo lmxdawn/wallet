@@ -25,14 +25,17 @@ func APIResponse(Ctx *gin.Context, err error, data interface{}) {
 	})
 }
 
+// CreateWalletRes ...
 type CreateWalletRes struct {
 	Address string `json:"address"` // 生成的钱包地址
 }
 
+// WithdrawRes ...
 type WithdrawRes struct {
 	Hash string `json:"hash"` // 生成的交易hash
 }
 
+// TransactionReceiptRes ...
 type TransactionReceiptRes struct {
 	Status int `json:"status"` // 交易状态（0：未成功，1：已成功）
 }

@@ -5,15 +5,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lmxdawn/wallet/config"
 	"github.com/lmxdawn/wallet/engine"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
-type Rpc struct {
-	server *gin.Engine
-}
-
-func Start(configPath string) {
+// Start 启动服务
+func Start(isSwag bool, configPath string) {
 
 	conf, err := config.NewConfig(configPath)
+	fmt.Println(conf)
 	if err != nil || len(conf.Engines) == 0 {
 		panic("Failed to load configuration")
 	}
@@ -44,6 +44,11 @@ func Start(configPath string) {
 		auth.GET("/delWallet", DelWallet)
 		auth.GET("/withdraw", Withdraw)
 		auth.GET("/getTransactionReceipt", GetTransactionReceipt)
+	}
+
+	if isSwag {
+		swagHandler := ginSwagger.WrapHandler(swaggerFiles.Handler)
+		server.GET("/swagger/*any", swagHandler)
 	}
 
 	err = server.Run(fmt.Sprintf(":%v", conf.App.Port))

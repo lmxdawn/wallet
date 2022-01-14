@@ -6,6 +6,13 @@ import (
 )
 
 // CreateWallet ...
+// @Tags 钱包
+// @Summary 创建钱包地址
+// @Produce json
+// @Security ApiKeyAuth
+// @Param login body CreateWalletReq true "参数"
+// @Success 200 {object} Response{data=server.CreateWalletRes}
+// @Router /api/createWallet [post]
 func CreateWallet(c *gin.Context) {
 
 	var q CreateWalletReq
@@ -30,6 +37,13 @@ func CreateWallet(c *gin.Context) {
 }
 
 // DelWallet ...
+// @Tags 钱包
+// @Summary 删除钱包地址
+// @Produce json
+// @Security ApiKeyAuth
+// @Param login body DelWalletReq true "参数"
+// @Success 200 {object} Response
+// @Router /api/delWallet [post]
 func DelWallet(c *gin.Context) {
 
 	var q DelWalletReq
@@ -51,6 +65,13 @@ func DelWallet(c *gin.Context) {
 }
 
 // Withdraw ...
+// @Tags 钱包
+// @Summary 提现
+// @Produce json
+// @Security ApiKeyAuth
+// @Param login body WithdrawReq true "参数"
+// @Success 200 {object} Response{data=server.WithdrawRes}
+// @Router /api/withdraw [post]
 func Withdraw(c *gin.Context) {
 
 	var q WithdrawReq
@@ -74,6 +95,13 @@ func Withdraw(c *gin.Context) {
 }
 
 // GetTransactionReceipt ...
+// @Tags 钱包
+// @Summary 获取交易结果
+// @Produce json
+// @Security ApiKeyAuth
+// @Param login body TransactionReceiptReq true "参数"
+// @Success 200 {object} Response{data=server.TransactionReceiptRes}
+// @Router /api/getTransactionReceipt [post]
 func GetTransactionReceipt(c *gin.Context) {
 
 	var q TransactionReceiptReq
