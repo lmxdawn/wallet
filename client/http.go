@@ -26,12 +26,12 @@ type HttpClient struct {
 }
 
 // NewHttpClient 创建
-func NewHttpClient(protocol, rechargeNotifyUrl, withdrawNotifyUrl string) (*HttpClient, error) {
+func NewHttpClient(protocol, rechargeNotifyUrl, withdrawNotifyUrl string) *HttpClient {
 	return &HttpClient{
 		protocol,
 		rechargeNotifyUrl,
 		withdrawNotifyUrl,
-	}, nil
+	}
 }
 
 // RechargeSuccess 充值成功通知

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/lmxdawn/wallet/client"
 	"github.com/lmxdawn/wallet/config"
 	"github.com/lmxdawn/wallet/db"
 	"github.com/lmxdawn/wallet/scheduler"
@@ -13,7 +14,7 @@ type Worker interface {
 	getTransaction(uint64) ([]types.Transaction, error)
 	getTransactionReceipt(*types.Transaction) error
 	createWallet() (*types.Wallet, error)
-	sendTransaction(string, string, int64, int) (string, error)
+	sendTransaction(string, string, int64) (string, error)
 }
 
 type Scheduler interface {
@@ -33,6 +34,7 @@ type ConCurrentEngine struct {
 	config    config.EngineConfig
 	Protocol  string
 	db        db.Database
+	http      *client.HttpClient
 }
 
 // Run 启动
@@ -103,18 +105,37 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 				c.scheduler.ReceiptSubmit(transaction)
 				continue
 			}
-			if transaction.Status == 1 {
-				log.Info().Msgf("交易完成：%v", transaction.Hash)
-			} else {
-				log.Info().Msgf("交易失败：%v", transaction.Hash)
+			if transaction.Status != 1 {
+				log.Error().Msgf("交易失败：%v", transaction.Hash)
+				continue
 			}
-			err = c.db.Put(transaction.To, "123")
-			if err != nil {
-				log.Info().Msgf("存入失败")
-			}
-			has, err := c.db.Has(transaction.To)
-			if has && err == nil {
-				log.Info().Msgf("查询到值")
+			log.Info().Msgf("交易完成：%v", transaction.Hash)
+
+			// 判断是否存在
+			if ok, err := c.db.Has(transaction.Hash); err == nil && ok {
+				orderId, err := c.db.Get(transaction.Hash)
+				if err != nil {
+					log.Error().Msgf("未查询到订单：%v, %v", transaction.Hash, err)
+					// 重新提交
+					c.scheduler.ReceiptSubmit(transaction)
+					continue
+				}
+				err = c.http.WithdrawSuccess(transaction.Hash, orderId, transaction.To, transaction.Value.Int64())
+				if err != nil {
+					log.Error().Msgf("提现回调通知失败：%v, %v", transaction.Hash, err)
+					// 重新提交
+					c.scheduler.ReceiptSubmit(transaction)
+					continue
+				}
+				_ = c.db.Delete(transaction.Hash)
+			} else if ok, err := c.db.Has(transaction.To); err == nil && ok {
+				err = c.http.RechargeSuccess(transaction.Hash, transaction.To, transaction.Value.Int64())
+				if err != nil {
+					log.Error().Msgf("充值回调通知失败：%v, %v", transaction.Hash, err)
+					// 重新提交
+					c.scheduler.ReceiptSubmit(transaction)
+					continue
+				}
 			}
 		}
 	}()
@@ -141,7 +162,7 @@ func (c *ConCurrentEngine) DeleteWallet(address string) error {
 
 // SendTransaction 发送交易
 func (c *ConCurrentEngine) SendTransaction(orderId string, toAddress string, value int64) (string, error) {
-	hash, err := c.Worker.sendTransaction(c.config.WithdrawPrivateKey, toAddress, value, c.config.Decimals)
+	hash, err := c.Worker.sendTransaction(c.config.WithdrawPrivateKey, toAddress, value)
 	if err != nil {
 		return "", err
 	}
@@ -178,6 +199,8 @@ func NewEngine(config config.EngineConfig) (*ConCurrentEngine, error) {
 		worker = NewEthWorker(config.Confirms, config.Contract, config.Rpc)
 	}
 
+	http := client.NewHttpClient(config.Protocol, config.RechargeNotifyUrl, config.WithdrawNotifyUrl)
+
 	return &ConCurrentEngine{
 		//scheduler: scheduler.NewSimpleScheduler(), // 简单的任务调度器
 		scheduler: scheduler.NewQueueScheduler(), // 队列的任务调度器
@@ -185,5 +208,6 @@ func NewEngine(config config.EngineConfig) (*ConCurrentEngine, error) {
 		config:    config,
 		Protocol:  config.Protocol,
 		db:        keyDB,
+		http:      http,
 	}, nil
 }

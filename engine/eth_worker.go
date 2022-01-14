@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/lmxdawn/wallet/client"
 	"github.com/lmxdawn/wallet/types"
-	"math"
 	"math/big"
 )
 
@@ -121,7 +120,7 @@ func (e *EthWorker) createWallet() (*types.Wallet, error) {
 }
 
 // sendTransaction 创建并发送裸交易
-func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amount int64, decimals int) (string, error) {
+func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amount int64) (string, error) {
 
 	privateKey, err := crypto.HexToECDSA(privateKeyStr)
 	if err != nil {
@@ -140,8 +139,8 @@ func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amou
 		return "", err
 	}
 
-	value := big.NewInt(amount * int64(math.Pow10(decimals))) // in wei (1 eth)
-	gasLimit := uint64(21000)                                 // in units
+	value := big.NewInt(amount) // in wei (1 eth)
+	gasLimit := uint64(21000)   // in units
 	gasPrice, err := e.http.SuggestGasPrice(context.Background())
 	if err != nil {
 		return "", err
