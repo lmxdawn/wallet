@@ -50,3 +50,4 @@ $ wallet -c config/config.yml
 
 > `script/Generate MyPOJOs.groovy` 生成数据库Model
 
+> `solcjs.cmd --version` 查看版本

@@ -83,7 +83,7 @@ func Withdraw(c *gin.Context) {
 
 	currentEngine := c.MustGet(q.Protocol).(engine.ConCurrentEngine)
 
-	hash, err := currentEngine.SendTransaction(q.OrderId, q.Address, q.Value)
+	hash, err := currentEngine.Withdraw(q.OrderId, q.Address, q.Value)
 	if err != nil {
 		APIResponse(c, nil, nil)
 		return

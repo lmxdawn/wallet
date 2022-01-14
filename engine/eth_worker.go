@@ -5,6 +5,8 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"errors"
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
@@ -14,21 +16,41 @@ import (
 	"github.com/lmxdawn/wallet/client"
 	"github.com/lmxdawn/wallet/types"
 	"math/big"
+	"strings"
 )
 
 type EthWorker struct {
-	confirms uint64 // 需要的确认数
-	contract string // 代币合约地址，为空表示主币
-	http     *ethclient.Client
+	confirms             uint64 // 需要的确认数
+	http                 *ethclient.Client
+	contractTransferHash common.Hash
+	contract             string  // 代币合约地址，为空表示主币
+	contractAbi          abi.ABI // 合约的abi
 }
 
-func NewEthWorker(confirms uint64, contract string, url string) *EthWorker {
+func NewEthWorker(confirms uint64, contract string, url string) (*EthWorker, error) {
 	http := client.NewEthClient(url)
-	return &EthWorker{
-		confirms: confirms,
-		contract: contract,
-		http:     http,
+
+	contractTransferSig := []byte("Transfer(address,address,uint256)")
+	contractTransferHash := crypto.Keccak256Hash(contractTransferSig)
+	tokenABI := "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"}]"
+	contractAbi, err := abi.JSON(strings.NewReader(tokenABI))
+	if err != nil {
+		return nil, err
 	}
+
+	return &EthWorker{
+		confirms:             confirms,
+		contract:             contract,
+		http:                 http,
+		contractTransferHash: contractTransferHash,
+		contractAbi:          contractAbi,
+	}, nil
+}
+
+type LogTransfer struct {
+	From  common.Address
+	To    common.Address
+	Value *big.Int
 }
 
 func (e *EthWorker) getTransactionReceipt(transaction *types.Transaction) error {
@@ -58,18 +80,29 @@ func (e *EthWorker) getTransactionReceipt(transaction *types.Transaction) error 
 	return nil
 }
 
-func (e *EthWorker) getTransaction(num uint64) ([]types.Transaction, error) {
+func (e *EthWorker) getTransaction(num uint64) ([]types.Transaction, uint64, error) {
+
+	if e.contract != "" {
+		return e.getBlockTransaction(num)
+	} else {
+		return e.getTokenTransaction(num)
+	}
+
+}
+
+func (e *EthWorker) getBlockTransaction(num uint64) ([]types.Transaction, uint64, error) {
+
 	block, err := e.http.BlockByNumber(context.Background(), big.NewInt(int64(num)))
 	if err != nil {
-		return nil, err
+		return nil, num, err
 	}
-	var transactions []types.Transaction
 
 	chainID, err := e.http.NetworkID(context.Background())
 	if err != nil {
-		return nil, err
+		return nil, num, err
 	}
 
+	var transactions []types.Transaction
 	for _, tx := range block.Transactions() {
 		// 如果接收方地址为空，则是创建合约的交易，忽略过去
 		if tx.To() == nil {
@@ -88,7 +121,48 @@ func (e *EthWorker) getTransaction(num uint64) ([]types.Transaction, error) {
 			Value:       tx.Value(),
 		})
 	}
-	return transactions, nil
+	return transactions, num, nil
+}
+
+func (e *EthWorker) getTokenTransaction(num uint64) ([]types.Transaction, uint64, error) {
+	contractAddress := common.HexToAddress(e.contract)
+	toBlock := num + 100
+	query := ethereum.FilterQuery{
+		FromBlock: big.NewInt(int64(num)),
+		ToBlock:   big.NewInt(int64(toBlock)),
+		Addresses: []common.Address{
+			contractAddress,
+		},
+	}
+	logs, err := e.http.FilterLogs(context.Background(), query)
+	if err != nil {
+		return nil, num, err
+	}
+
+	var transactions []types.Transaction
+	for _, vLog := range logs {
+		switch vLog.Topics[0].Hex() {
+		case e.contractTransferHash.Hex():
+
+			var transferEvent LogTransfer
+
+			err = e.contractAbi.UnpackIntoInterface(&transferEvent, "Transfer", vLog.Data)
+			if err != nil {
+				continue
+			}
+
+			transactions = append(transactions, types.Transaction{
+				BlockNumber: big.NewInt(int64(num)),
+				BlockHash:   vLog.BlockHash.Hex(),
+				Hash:        vLog.TxHash.Hex(),
+				From:        vLog.Topics[1].Hex(),
+				To:          vLog.Topics[2].Hex(),
+				Value:       transferEvent.Value,
+			})
+		}
+	}
+
+	return transactions, toBlock, nil
 }
 
 func (e *EthWorker) createWallet() (*types.Wallet, error) {
@@ -121,6 +195,8 @@ func (e *EthWorker) createWallet() (*types.Wallet, error) {
 
 // sendTransaction 创建并发送裸交易
 func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amount int64) (string, error) {
+
+	// TODO 判断是否为代币转账
 
 	privateKey, err := crypto.HexToECDSA(privateKeyStr)
 	if err != nil {

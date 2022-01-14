@@ -11,7 +11,7 @@ import (
 )
 
 type Worker interface {
-	getTransaction(uint64) ([]types.Transaction, error)
+	getTransaction(uint64) ([]types.Transaction, uint64, error)
 	getTransactionReceipt(*types.Transaction) error
 	createWallet() (*types.Wallet, error)
 	sendTransaction(string, string, int64) (string, error)
@@ -76,14 +76,14 @@ func (c *ConCurrentEngine) createBlockWorker(out chan types.Transaction) {
 			c.scheduler.BlockWorkerReady(in)
 			num := <-in
 			log.Info().Msgf("获取区块：%d", num)
-			transactions, err := c.Worker.getTransaction(num)
+			transactions, blockNum, err := c.Worker.getTransaction(num)
 			if err != nil {
 				log.Info().Msgf("wait %d seconds, the latest block is not obtained", c.config.BlockAfterTime)
 				<-time.After(time.Duration(c.config.BlockAfterTime) * time.Second)
 				c.scheduler.BlockSubmit(num)
 				continue
 			}
-			c.scheduler.BlockSubmit(num + 1)
+			c.scheduler.BlockSubmit(blockNum)
 			for _, transaction := range transactions {
 				out <- transaction
 			}
@@ -160,8 +160,9 @@ func (c *ConCurrentEngine) DeleteWallet(address string) error {
 	return nil
 }
 
-// SendTransaction 发送交易
-func (c *ConCurrentEngine) SendTransaction(orderId string, toAddress string, value int64) (string, error) {
+// Withdraw 提现
+func (c *ConCurrentEngine) Withdraw(orderId string, toAddress string, value int64) (string, error) {
+
 	hash, err := c.Worker.sendTransaction(c.config.WithdrawPrivateKey, toAddress, value)
 	if err != nil {
 		return "", err
@@ -196,7 +197,10 @@ func NewEngine(config config.EngineConfig) (*ConCurrentEngine, error) {
 	var worker Worker
 	switch config.Protocol {
 	case "eth":
-		worker = NewEthWorker(config.Confirms, config.Contract, config.Rpc)
+		worker, err = NewEthWorker(config.Confirms, config.Contract, config.Rpc)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	http := client.NewHttpClient(config.Protocol, config.RechargeNotifyUrl, config.WithdrawNotifyUrl)
