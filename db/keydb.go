@@ -1,6 +1,9 @@
 package db
 
-import "github.com/syndtr/goleveldb/leveldb"
+import (
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/util"
+)
 
 type KeyDB struct {
 	db *leveldb.DB
@@ -31,6 +34,18 @@ func (l *KeyDB) Get(key string) (string, error) {
 		return "", err
 	}
 	return string(data), nil
+}
+
+func (l *KeyDB) ListWallet(prefix string) ([]WalletItem, error) {
+	iter := l.db.NewIterator(util.BytesPrefix([]byte(prefix)), nil)
+	var list []WalletItem
+	for iter.Next() {
+		list = append(list, WalletItem{
+			Address:    string(iter.Key()),
+			PrivateKey: string(iter.Value()),
+		})
+	}
+	return list, nil
 }
 
 func (l *KeyDB) Put(key string, value string) error {

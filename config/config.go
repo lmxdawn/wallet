@@ -14,6 +14,8 @@ type EngineConfig struct {
 	Protocol           string `yaml:"protocol"`             // 协议名称
 	Rpc                string `yaml:"rpc"`                  // rpc配置
 	File               string `yaml:"file"`                 // db文件配置
+	WalletPrefix       string `yaml:"wallet_prefix"`        // 钱包的存储前缀
+	HashPrefix         string `yaml:"hash_prefix"`          // 交易哈希的存储前缀
 	BlockInit          uint64 `yaml:"block_init"`           // 初始块
 	BlockCount         uint64 `yaml:"block_count"`          // 区块worker数量
 	BlockAfterTime     uint64 `yaml:"block_after_time"`     // 获取最新块的等待时间

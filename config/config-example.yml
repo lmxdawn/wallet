@@ -6,6 +6,8 @@ engines:
     protocol: eth
     rpc: https://mainnet.infura.io/v3/adee4ead47844d238802431fcb7683c6
     file: data/eth
+    wallet_prefix: wallet-
+    hash_prefix: hash-
     block_init: 14000513
     block_count: 1
     block_after_time: 1
@@ -21,6 +23,8 @@ engines:
     protocol: eth
     rpc: https://mainnet.infura.io/v3/adee4ead47844d238802431fcb7683c6
     file: data/usdt
+    wallet_prefix: wallet-
+    hash_prefix: hash-
     block_init: 14000513
     block_count: 1
     block_after_time: 1

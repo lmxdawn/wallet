@@ -112,8 +112,8 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 			log.Info().Msgf("交易完成：%v", transaction.Hash)
 
 			// 判断是否存在
-			if ok, err := c.db.Has(transaction.Hash); err == nil && ok {
-				orderId, err := c.db.Get(transaction.Hash)
+			if ok, err := c.db.Has(c.config.HashPrefix + transaction.Hash); err == nil && ok {
+				orderId, err := c.db.Get(c.config.HashPrefix + transaction.Hash)
 				if err != nil {
 					log.Error().Msgf("未查询到订单：%v, %v", transaction.Hash, err)
 					// 重新提交
@@ -128,7 +128,7 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 					continue
 				}
 				_ = c.db.Delete(transaction.Hash)
-			} else if ok, err := c.db.Has(transaction.To); err == nil && ok {
+			} else if ok, err := c.db.Has(c.config.WalletPrefix + transaction.To); err == nil && ok {
 				err = c.http.RechargeSuccess(transaction.Hash, transaction.To, transaction.Value.Int64())
 				if err != nil {
 					log.Error().Msgf("充值回调通知失败：%v, %v", transaction.Hash, err)
@@ -147,13 +147,13 @@ func (c *ConCurrentEngine) CreateWallet() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	_ = c.db.Put(wallet.Address, wallet.PrivateKey)
+	_ = c.db.Put(c.config.WalletPrefix+wallet.Address, wallet.PrivateKey)
 	return wallet.Address, nil
 }
 
 // DeleteWallet 删除钱包
 func (c *ConCurrentEngine) DeleteWallet(address string) error {
-	err := c.db.Delete(address)
+	err := c.db.Delete(c.config.WalletPrefix + address)
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func (c *ConCurrentEngine) Withdraw(orderId string, toAddress string, value int6
 	if err != nil {
 		return "", err
 	}
-	_ = c.db.Put(hash, orderId)
+	_ = c.db.Put(c.config.HashPrefix+hash, orderId)
 	return hash, nil
 }
 
