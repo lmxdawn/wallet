@@ -25,7 +25,7 @@ type HttpClient struct {
 	coinName          string
 	rechargeNotifyUrl string
 	withdrawNotifyUrl string
-	timeout           int // 超时时间，毫秒单位
+	client            *http.Client
 }
 
 // NewHttpClient 创建
@@ -35,7 +35,9 @@ func NewHttpClient(protocol, coinName, rechargeNotifyUrl, withdrawNotifyUrl stri
 		coinName,
 		rechargeNotifyUrl,
 		withdrawNotifyUrl,
-		1000 * 10,
+		&http.Client{
+			Timeout: time.Millisecond * time.Duration(10*1000),
+		},
 	}
 }
 
@@ -100,15 +102,12 @@ func (h *HttpClient) get(urlStr string, params url.Values, res interface{}) erro
 	Url.RawQuery = params.Encode()
 	urlPath := Url.String()
 
-	client := &http.Client{
-		Timeout: time.Millisecond * time.Duration(h.timeout),
-	}
 	req, err := http.NewRequest(http.MethodGet, urlPath, nil)
 	if err != nil {
 		// handle error
 		return err
 	}
-	resp, err := client.Do(req)
+	resp, err := h.client.Do(req)
 	if err != nil {
 		// handle error
 		return err
@@ -135,16 +134,13 @@ func (h *HttpClient) post(urlStr string, data map[string]interface{}, res interf
 		return err
 	}
 
-	client := &http.Client{
-		Timeout: time.Millisecond * time.Duration(h.timeout),
-	}
 	req, err := http.NewRequest(http.MethodPost, urlStr, bytes.NewReader(bytesData))
 	if err != nil {
 		// handle error
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(req)
+	resp, err := h.client.Do(req)
 	if err != nil {
 		// handle error
 		return err
