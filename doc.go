@@ -7,5 +7,5 @@ import (
 )
 
 func init() {
-	isSwag = ginSwagger.WrapHandler(swaggerFiles.Handler)
+	isSwag = true
 }

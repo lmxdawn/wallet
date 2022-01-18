@@ -1,37 +1,37 @@
 app:
   port: 10001
 engines:
-  - name: ETH
+  - coin_name: ETH
     contract:
     protocol: eth
-    rpc: https://mainnet.infura.io/v3/adee4ead47844d238802431fcb7683c6
+    rpc: https://ropsten.infura.io/v3/adee4ead47844d238802431fcb7683c6
     file: data/eth
     wallet_prefix: wallet-
     hash_prefix: hash-
-    block_init: 14000513
+    block_init: 11828416
     block_count: 1
     block_after_time: 1
-    receipt_count: 1
+    receipt_count: 20
     receipt_after_time: 1
     confirms: 1
-    recharge_notify_url: https://mainnet.infura.io
-    withdraw_notify_url: https://mainnet.infura.io
-    withdraw_private_key: dfxdsfsdf
+    recharge_notify_url: http://localhost:10001/api/withdraw
+    withdraw_notify_url: http://localhost:10001/api/withdraw
+    withdraw_private_key: 4006894ada31cfc87211e0b428c7f812789636cf6f79efef5d2acc2b60617cf1
     decimals: 18
-  - name: Tether USD
-    contract: 0xdac17f958d2ee523a2206206994597c13d831ec7
-    protocol: eth
-    rpc: https://mainnet.infura.io/v3/adee4ead47844d238802431fcb7683c6
-    file: data/usdt
-    wallet_prefix: wallet-
-    hash_prefix: hash-
-    block_init: 14000513
-    block_count: 1
-    block_after_time: 1
-    receipt_count: 1
-    receipt_after_time: 1
-    confirms: 1
-    recharge_notify_url: https://mainnet.infura.io
-    withdraw_notify_url: https://mainnet.infura.io
-    withdraw_private_key: dfxdsfsdf
-    decimals: 18
+#  - coin_name: TEST
+#    contract: 0xeDc4019BCBdA0f7acCBB4833ffF54d618d9b7f82
+#    protocol: eth
+#    rpc: https://ropsten.infura.io/v3/adee4ead47844d238802431fcb7683c6
+#    file: data/usdt
+#    wallet_prefix: wallet-
+#    hash_prefix: hash-
+#    block_init: 11824838
+#    block_count: 1
+#    block_after_time: 1
+#    receipt_count: 1
+#    receipt_after_time: 1
+#    confirms: 1
+#    recharge_notify_url: https://mainnet.infura.io
+#    withdraw_notify_url: https://mainnet.infura.io
+#    withdraw_private_key: 4006894ada31cfc87211e0b428c7f812789636cf6f79efef5d2acc2b60617cf1
+#    decimals: 18

@@ -11,7 +11,7 @@ func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		token := c.GetHeader("x-token")
-		if token != "" {
+		if token == "" {
 			c.Abort()
 			APIResponse(c, ErrToken, nil)
 		}
@@ -25,7 +25,7 @@ func SetDB(engines ...*engine.ConCurrentEngine) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		for _, currentEngine := range engines {
-			c.Set(currentEngine.Protocol, currentEngine)
+			c.Set(currentEngine.Protocol+currentEngine.CoinName, currentEngine)
 		}
 	}
 

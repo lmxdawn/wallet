@@ -9,9 +9,9 @@ type AppConfig struct {
 }
 
 type EngineConfig struct {
-	Name               string `yaml:"name"`                 // 名称
 	Contract           string `yaml:"contract"`             // 合约地址（为空表示主币）
 	Protocol           string `yaml:"protocol"`             // 协议名称
+	CoinName           string `yaml:"coin_name"`            // 币种名称
 	Rpc                string `yaml:"rpc"`                  // rpc配置
 	File               string `yaml:"file"`                 // db文件配置
 	WalletPrefix       string `yaml:"wallet_prefix"`        // 钱包的存储前缀

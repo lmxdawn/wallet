@@ -1,10 +1,14 @@
 definitions:
   server.CreateWalletReq:
     properties:
+      coinName:
+        description: 币种名称
+        type: string
       protocol:
         description: 协议
         type: string
     required:
+    - coinName
     - protocol
     type: object
   server.CreateWalletRes:
@@ -18,11 +22,15 @@ definitions:
       address:
         description: 地址
         type: string
+      coinName:
+        description: 币种名称
+        type: string
       protocol:
         description: 协议
         type: string
     required:
     - address
+    - coinName
     - protocol
     type: object
   server.Response:
@@ -38,6 +46,9 @@ definitions:
     type: object
   server.TransactionReceiptReq:
     properties:
+      coinName:
+        description: 币种名称
+        type: string
       hash:
         description: 交易哈希
         type: string
@@ -45,6 +56,7 @@ definitions:
         description: 协议
         type: string
     required:
+    - coinName
     - hash
     - protocol
     type: object
@@ -59,6 +71,9 @@ definitions:
       address:
         description: 提现地址
         type: string
+      coinName:
+        description: 币种名称
+        type: string
       orderId:
         description: 订单号
         type: string
@@ -70,6 +85,7 @@ definitions:
         type: integer
     required:
     - address
+    - coinName
     - orderId
     - protocol
     - value
@@ -141,7 +157,7 @@ paths:
       tags:
       - 钱包
   /api/getTransactionReceipt:
-    post:
+    get:
       parameters:
       - description: 参数
         in: body

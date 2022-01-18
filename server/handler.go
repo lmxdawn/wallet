@@ -22,7 +22,13 @@ func CreateWallet(c *gin.Context) {
 		return
 	}
 
-	currentEngine := c.MustGet(q.Protocol).(engine.ConCurrentEngine)
+	v, ok := c.Get(q.Protocol + q.CoinName)
+	if !ok {
+		APIResponse(c, ErrEngine, nil)
+		return
+	}
+
+	currentEngine := v.(*engine.ConCurrentEngine)
 
 	// 创建钱包
 	address, err := currentEngine.CreateWallet()
@@ -53,7 +59,13 @@ func DelWallet(c *gin.Context) {
 		return
 	}
 
-	currentEngine := c.MustGet(q.Protocol).(engine.ConCurrentEngine)
+	v, ok := c.Get(q.Protocol + q.CoinName)
+	if !ok {
+		APIResponse(c, ErrEngine, nil)
+		return
+	}
+
+	currentEngine := v.(*engine.ConCurrentEngine)
 
 	err := currentEngine.DeleteWallet(q.Address)
 	if err != nil {
@@ -81,11 +93,17 @@ func Withdraw(c *gin.Context) {
 		return
 	}
 
-	currentEngine := c.MustGet(q.Protocol).(engine.ConCurrentEngine)
+	v, ok := c.Get(q.Protocol + q.CoinName)
+	if !ok {
+		APIResponse(c, ErrEngine, nil)
+		return
+	}
+
+	currentEngine := v.(*engine.ConCurrentEngine)
 
 	hash, err := currentEngine.Withdraw(q.OrderId, q.Address, q.Value)
 	if err != nil {
-		APIResponse(c, nil, nil)
+		APIResponse(c, err, nil)
 		return
 	}
 
@@ -101,7 +119,7 @@ func Withdraw(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Param login body TransactionReceiptReq true "参数"
 // @Success 200 {object} Response{data=server.TransactionReceiptRes}
-// @Router /api/getTransactionReceipt [post]
+// @Router /api/getTransactionReceipt [get]
 func GetTransactionReceipt(c *gin.Context) {
 
 	var q TransactionReceiptReq
@@ -111,7 +129,13 @@ func GetTransactionReceipt(c *gin.Context) {
 		return
 	}
 
-	currentEngine := c.MustGet(q.Protocol).(engine.ConCurrentEngine)
+	v, ok := c.Get(q.Protocol + q.CoinName)
+	if !ok {
+		APIResponse(c, ErrEngine, nil)
+		return
+	}
+
+	currentEngine := v.(*engine.ConCurrentEngine)
 
 	status, err := currentEngine.GetTransactionReceipt(q.Hash)
 	if err != nil {

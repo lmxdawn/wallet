@@ -115,7 +115,7 @@ var doc = `{
             }
         },
         "/api/getTransactionReceipt": {
-            "post": {
+            "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
@@ -213,9 +213,14 @@ var doc = `{
         "server.CreateWalletReq": {
             "type": "object",
             "required": [
+                "coinName",
                 "protocol"
             ],
             "properties": {
+                "coinName": {
+                    "description": "币种名称",
+                    "type": "string"
+                },
                 "protocol": {
                     "description": "协议",
                     "type": "string"
@@ -235,11 +240,16 @@ var doc = `{
             "type": "object",
             "required": [
                 "address",
+                "coinName",
                 "protocol"
             ],
             "properties": {
                 "address": {
                     "description": "地址",
+                    "type": "string"
+                },
+                "coinName": {
+                    "description": "币种名称",
                     "type": "string"
                 },
                 "protocol": {
@@ -267,10 +277,15 @@ var doc = `{
         "server.TransactionReceiptReq": {
             "type": "object",
             "required": [
+                "coinName",
                 "hash",
                 "protocol"
             ],
             "properties": {
+                "coinName": {
+                    "description": "币种名称",
+                    "type": "string"
+                },
                 "hash": {
                     "description": "交易哈希",
                     "type": "string"
@@ -294,6 +309,7 @@ var doc = `{
             "type": "object",
             "required": [
                 "address",
+                "coinName",
                 "orderId",
                 "protocol",
                 "value"
@@ -301,6 +317,10 @@ var doc = `{
             "properties": {
                 "address": {
                     "description": "提现地址",
+                    "type": "string"
+                },
+                "coinName": {
+                    "description": "币种名称",
                     "type": "string"
                 },
                 "orderId": {

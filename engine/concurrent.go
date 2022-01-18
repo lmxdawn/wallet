@@ -33,6 +33,7 @@ type ConCurrentEngine struct {
 	Worker    Worker
 	config    config.EngineConfig
 	Protocol  string
+	CoinName  string
 	db        db.Database
 	http      *client.HttpClient
 }
@@ -113,6 +114,7 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 
 			// 判断是否存在
 			if ok, err := c.db.Has(c.config.HashPrefix + transaction.Hash); err == nil && ok {
+				log.Info().Msgf("当前哈希存在：%v", transaction.Hash)
 				orderId, err := c.db.Get(c.config.HashPrefix + transaction.Hash)
 				if err != nil {
 					log.Error().Msgf("未查询到订单：%v, %v", transaction.Hash, err)
@@ -120,7 +122,7 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 					c.scheduler.ReceiptSubmit(transaction)
 					continue
 				}
-				err = c.http.WithdrawSuccess(transaction.Hash, orderId, transaction.To, transaction.Value.Int64())
+				err = c.http.WithdrawSuccess(transaction.Hash, transaction.Status, orderId, transaction.To, transaction.Value.Int64())
 				if err != nil {
 					log.Error().Msgf("提现回调通知失败：%v, %v", transaction.Hash, err)
 					// 重新提交
@@ -129,7 +131,8 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 				}
 				_ = c.db.Delete(transaction.Hash)
 			} else if ok, err := c.db.Has(c.config.WalletPrefix + transaction.To); err == nil && ok {
-				err = c.http.RechargeSuccess(transaction.Hash, transaction.To, transaction.Value.Int64())
+				log.Info().Msgf("当前地址存在：%v", transaction.To)
+				err = c.http.RechargeSuccess(transaction.Hash, transaction.Status, transaction.To, transaction.Value.Int64())
 				if err != nil {
 					log.Error().Msgf("充值回调通知失败：%v, %v", transaction.Hash, err)
 					// 重新提交
@@ -148,6 +151,7 @@ func (c *ConCurrentEngine) CreateWallet() (string, error) {
 		return "", err
 	}
 	_ = c.db.Put(c.config.WalletPrefix+wallet.Address, wallet.PrivateKey)
+	log.Info().Msgf("创建钱包成功，地址：%v，私钥：%v", wallet.Address, wallet.PrivateKey)
 	return wallet.Address, nil
 }
 
@@ -203,7 +207,7 @@ func NewEngine(config config.EngineConfig) (*ConCurrentEngine, error) {
 		}
 	}
 
-	http := client.NewHttpClient(config.Protocol, config.RechargeNotifyUrl, config.WithdrawNotifyUrl)
+	http := client.NewHttpClient(config.Protocol, config.CoinName, config.RechargeNotifyUrl, config.WithdrawNotifyUrl)
 
 	return &ConCurrentEngine{
 		//scheduler: scheduler.NewSimpleScheduler(), // 简单的任务调度器
@@ -211,6 +215,7 @@ func NewEngine(config config.EngineConfig) (*ConCurrentEngine, error) {
 		Worker:    worker,
 		config:    config,
 		Protocol:  config.Protocol,
+		CoinName:  config.CoinName,
 		db:        keyDB,
 		http:      http,
 	}, nil

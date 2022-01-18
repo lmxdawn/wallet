@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lmxdawn/wallet/config"
 	"github.com/lmxdawn/wallet/engine"
+	"github.com/rs/zerolog/log"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
@@ -27,8 +28,9 @@ func Start(isSwag bool, configPath string) {
 		engines = append(engines, eth)
 	}
 
+	// 启动监听器
 	for _, currentEngine := range engines {
-		currentEngine.Run()
+		go currentEngine.Run()
 	}
 
 	server := gin.Default()
@@ -40,9 +42,9 @@ func Start(isSwag bool, configPath string) {
 
 	auth := server.Group("/api", AuthRequired())
 	{
-		auth.GET("/createWallet", CreateWallet)
-		auth.GET("/delWallet", DelWallet)
-		auth.GET("/withdraw", Withdraw)
+		auth.POST("/createWallet", CreateWallet)
+		auth.POST("/delWallet", DelWallet)
+		auth.POST("/withdraw", Withdraw)
 		auth.GET("/getTransactionReceipt", GetTransactionReceipt)
 	}
 
@@ -55,5 +57,7 @@ func Start(isSwag bool, configPath string) {
 	if err != nil {
 		panic("start error")
 	}
+
+	log.Info().Msgf("start success")
 
 }

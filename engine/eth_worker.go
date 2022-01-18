@@ -3,7 +3,6 @@ package engine
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/hex"
 	"errors"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -12,7 +11,6 @@ import (
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/lmxdawn/wallet/client"
 	"github.com/lmxdawn/wallet/types"
 	"math/big"
@@ -20,18 +18,21 @@ import (
 )
 
 type EthWorker struct {
-	confirms             uint64 // 需要的确认数
-	http                 *ethclient.Client
-	contractTransferHash common.Hash
-	contract             string  // 代币合约地址，为空表示主币
-	contractAbi          abi.ABI // 合约的abi
+	confirms                  uint64 // 需要的确认数
+	http                      *ethclient.Client
+	contractTransferEventHash common.Hash
+	contractTransferHash      common.Hash
+	contract                  string  // 代币合约地址，为空表示主币
+	contractAbi               abi.ABI // 合约的abi
 }
 
 func NewEthWorker(confirms uint64, contract string, url string) (*EthWorker, error) {
 	http := client.NewEthClient(url)
 
-	contractTransferSig := []byte("Transfer(address,address,uint256)")
-	contractTransferHash := crypto.Keccak256Hash(contractTransferSig)
+	contractTransferHashSig := []byte("transfer(address,uint256)")
+	contractTransferHash := crypto.Keccak256Hash(contractTransferHashSig)
+	contractTransferEventHashSig := []byte("Transfer(address,address,uint256)")
+	contractTransferEventHash := crypto.Keccak256Hash(contractTransferEventHashSig)
 	tokenABI := "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"}]"
 	contractAbi, err := abi.JSON(strings.NewReader(tokenABI))
 	if err != nil {
@@ -39,11 +40,12 @@ func NewEthWorker(confirms uint64, contract string, url string) (*EthWorker, err
 	}
 
 	return &EthWorker{
-		confirms:             confirms,
-		contract:             contract,
-		http:                 http,
-		contractTransferHash: contractTransferHash,
-		contractAbi:          contractAbi,
+		confirms:                  confirms,
+		contract:                  contract,
+		http:                      http,
+		contractTransferHash:      contractTransferHash,
+		contractTransferEventHash: contractTransferEventHash,
+		contractAbi:               contractAbi,
 	}, nil
 }
 
@@ -81,8 +83,7 @@ func (e *EthWorker) getTransactionReceipt(transaction *types.Transaction) error 
 }
 
 func (e *EthWorker) getTransaction(num uint64) ([]types.Transaction, uint64, error) {
-
-	if e.contract != "" {
+	if e.contract == "" {
 		return e.getBlockTransaction(num)
 	} else {
 		return e.getTokenTransaction(num)
@@ -116,12 +117,12 @@ func (e *EthWorker) getBlockTransaction(num uint64) ([]types.Transaction, uint64
 			BlockNumber: big.NewInt(int64(num)),
 			BlockHash:   block.Hash().Hex(),
 			Hash:        tx.Hash().Hex(),
-			From:        msg.From().Hex(),
-			To:          tx.To().Hex(),
+			From:        strings.ToLower(msg.From().Hex()),
+			To:          strings.ToLower(tx.To().Hex()),
 			Value:       tx.Value(),
 		})
 	}
-	return transactions, num, nil
+	return transactions, num + 1, nil
 }
 
 func (e *EthWorker) getTokenTransaction(num uint64) ([]types.Transaction, uint64, error) {
@@ -142,7 +143,7 @@ func (e *EthWorker) getTokenTransaction(num uint64) ([]types.Transaction, uint64
 	var transactions []types.Transaction
 	for _, vLog := range logs {
 		switch vLog.Topics[0].Hex() {
-		case e.contractTransferHash.Hex():
+		case e.contractTransferEventHash.Hex():
 
 			var transferEvent LogTransfer
 
@@ -155,8 +156,8 @@ func (e *EthWorker) getTokenTransaction(num uint64) ([]types.Transaction, uint64
 				BlockNumber: big.NewInt(int64(num)),
 				BlockHash:   vLog.BlockHash.Hex(),
 				Hash:        vLog.TxHash.Hex(),
-				From:        vLog.Topics[1].Hex(),
-				To:          vLog.Topics[2].Hex(),
+				From:        strings.ToLower(common.HexToAddress(vLog.Topics[1].Hex()).Hex()),
+				To:          strings.ToLower(common.HexToAddress(vLog.Topics[2].Hex()).Hex()),
 				Value:       transferEvent.Value,
 			})
 		}
@@ -196,8 +197,6 @@ func (e *EthWorker) createWallet() (*types.Wallet, error) {
 // sendTransaction 创建并发送裸交易
 func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amount int64) (string, error) {
 
-	// TODO 判断是否为代币转账
-
 	privateKey, err := crypto.HexToECDSA(privateKeyStr)
 	if err != nil {
 		return "", err
@@ -216,14 +215,28 @@ func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amou
 	}
 
 	value := big.NewInt(amount) // in wei (1 eth)
-	gasLimit := uint64(21000)   // in units
+	var gasLimit uint64
+	gasLimit = uint64(80000) // in units
 	gasPrice, err := e.http.SuggestGasPrice(context.Background())
 	if err != nil {
 		return "", err
 	}
-
-	toAddressHex := common.HexToAddress(toAddress)
 	var data []byte
+	toAddressHex := common.HexToAddress(toAddress)
+	if e.contract != "" {
+		data, err = makeERC20TransferData(e.contractTransferHash, toAddressHex, value)
+		if err != nil {
+			return "", err
+		}
+		if err != nil {
+			return "", err
+		}
+		value = big.NewInt(0)
+		toAddressHex = common.HexToAddress(e.contract)
+		// 代币转账把 gasPrice 乘以 2
+		//gasPrice = gasPrice.Mul(gasPrice,big.NewInt(2))
+	}
+
 	txData := &ethTypes.LegacyTx{
 		Nonce:    nonce,
 		To:       &toAddressHex,
@@ -244,21 +257,20 @@ func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amou
 		return "", err
 	}
 
-	rawTxBytes, err := rlp.EncodeToBytes(signTx)
-	if err != nil {
-		return "", err
-	}
-	rawTxHex := hex.EncodeToString(rawTxBytes)
-
-	txSend := new(ethTypes.Transaction)
-	err = rlp.DecodeBytes(rawTxBytes, &txSend)
-	if err != nil {
-		return "", err
-	}
-	err = e.http.SendTransaction(context.Background(), txSend)
+	err = e.http.SendTransaction(context.Background(), signTx)
 	if err != nil {
 		return "", err
 	}
 
-	return rawTxHex, nil
+	return signTx.Hash().Hex(), nil
+}
+
+func makeERC20TransferData(contractTransferHash common.Hash, toAddress common.Address, amount *big.Int) ([]byte, error) {
+	var data []byte
+	data = append(data, contractTransferHash[:4]...)
+	paddedAddress := common.LeftPadBytes(toAddress.Bytes(), 32)
+	data = append(data, paddedAddress...)
+	paddedAmount := common.LeftPadBytes(amount.Bytes(), 32)
+	data = append(data, paddedAmount...)
+	return data, nil
 }
