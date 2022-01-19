@@ -20,8 +20,8 @@ func AuthRequired() gin.HandlerFunc {
 
 }
 
-// SetDB 设置db数据库
-func SetDB(engines ...*engine.ConCurrentEngine) gin.HandlerFunc {
+// SetEngine 设置db数据库
+func SetEngine(engines ...*engine.ConCurrentEngine) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		for _, currentEngine := range engines {

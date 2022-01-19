@@ -38,7 +38,7 @@ func Start(isSwag bool, configPath string) {
 	// 中间件
 	server.Use(gin.Logger())
 	server.Use(gin.Recovery())
-	server.Use(SetDB(engines...))
+	server.Use(SetEngine(engines...))
 
 	auth := server.Group("/api", AuthRequired())
 	{
