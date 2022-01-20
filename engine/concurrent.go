@@ -8,10 +8,12 @@ import (
 	"github.com/lmxdawn/wallet/types"
 	"github.com/rs/zerolog/log"
 	"math/big"
+	"strconv"
 	"time"
 )
 
 type Worker interface {
+	getNowBlockNum() (uint64, error)
 	getTransaction(uint64) ([]types.Transaction, uint64, error)
 	getTransactionReceipt(*types.Transaction) error
 	getBalance(address string) (*big.Int, error)
@@ -49,6 +51,21 @@ func (c *ConCurrentEngine) Run() {
 	// 关闭连接
 	defer c.db.Close()
 
+	// 读取当前区块
+	blockNumber := c.config.BlockInit
+	blockNumberStr, err := c.db.Get("block_number")
+	if err != nil {
+		nowBlockNumber, err := c.Worker.getNowBlockNum()
+		if err == nil {
+			blockNumber = nowBlockNumber
+		}
+	} else {
+		blockNumberTmp, err := strconv.Atoi(blockNumberStr)
+		if err == nil {
+			blockNumber = uint64(blockNumberTmp)
+		}
+	}
+
 	// 区块信息
 	c.scheduler.BlockRun()
 	// 交易信息
@@ -65,7 +82,7 @@ func (c *ConCurrentEngine) Run() {
 		c.createReceiptWorker()
 	}
 
-	c.scheduler.BlockSubmit(c.config.BlockInit)
+	c.scheduler.BlockSubmit(blockNumber)
 
 	go func() {
 		for {
@@ -108,7 +125,12 @@ func (c *ConCurrentEngine) createBlockWorker(out chan types.Transaction) {
 				c.scheduler.BlockSubmit(num)
 				continue
 			}
-			c.scheduler.BlockSubmit(blockNum)
+			err = c.db.Put("block_number", strconv.FormatUint(blockNum, 10))
+			if err != nil {
+				c.scheduler.BlockSubmit(num)
+			} else {
+				c.scheduler.BlockSubmit(blockNum)
+			}
 			for _, transaction := range transactions {
 				out <- transaction
 			}

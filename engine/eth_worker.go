@@ -57,6 +57,16 @@ type LogTransfer struct {
 	Value *big.Int
 }
 
+// 获取最新块
+func (e *EthWorker) getNowBlockNum() (uint64, error) {
+
+	blockNumber, err := e.http.BlockNumber(context.Background())
+	if err != nil {
+		return 0, err
+	}
+	return blockNumber, nil
+}
+
 func (e *EthWorker) getTransactionReceipt(transaction *types.Transaction) error {
 
 	hash := common.HexToHash(transaction.Hash)

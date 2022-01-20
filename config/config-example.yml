@@ -8,7 +8,7 @@ engines:
     file: data/eth
     wallet_prefix: wallet-
     hash_prefix: hash-
-    block_init: 11828416
+    block_init: 0
     block_after_time: 1
     receipt_count: 20
     receipt_after_time: 1
@@ -28,7 +28,7 @@ engines:
 #    file: data/usdt
 #    wallet_prefix: wallet-
 #    hash_prefix: hash-
-#    block_init: 11824838
+#    block_init: 0
 #    block_after_time: 1
 #    receipt_count: 1
 #    receipt_after_time: 1

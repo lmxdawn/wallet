@@ -16,7 +16,7 @@ type EngineConfig struct {
 	File                string `yaml:"file"`                  // db文件配置
 	WalletPrefix        string `yaml:"wallet_prefix"`         // 钱包的存储前缀
 	HashPrefix          string `yaml:"hash_prefix"`           // 交易哈希的存储前缀
-	BlockInit           uint64 `yaml:"block_init"`            // 初始块
+	BlockInit           uint64 `yaml:"block_init"`            // 初始块（默认读取最新块）
 	BlockAfterTime      uint64 `yaml:"block_after_time"`      // 获取最新块的等待时间
 	ReceiptCount        uint64 `yaml:"receipt_count"`         // 交易凭证worker数量
 	ReceiptAfterTime    uint64 `yaml:"receipt_after_time"`    // 获取交易信息的等待时间
