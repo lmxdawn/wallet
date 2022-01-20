@@ -7,14 +7,16 @@ import (
 	"github.com/lmxdawn/wallet/scheduler"
 	"github.com/lmxdawn/wallet/types"
 	"github.com/rs/zerolog/log"
+	"math/big"
 	"time"
 )
 
 type Worker interface {
 	getTransaction(uint64) ([]types.Transaction, uint64, error)
 	getTransactionReceipt(*types.Transaction) error
+	getBalance(address string) (*big.Int, error)
 	createWallet() (*types.Wallet, error)
-	sendTransaction(string, string, int64) (string, error)
+	sendTransaction(string, string, *big.Int) (string, error)
 }
 
 type Scheduler interface {
@@ -26,6 +28,10 @@ type Scheduler interface {
 	ReceiptWorkerReady(chan types.Transaction)
 	ReceiptSubmit(types.Transaction)
 	ReceiptRun()
+	CollectionSendWorkerChan() chan db.WalletItem
+	CollectionSendWorkerReady(c chan db.WalletItem)
+	CollectionSendSubmit(c db.WalletItem)
+	CollectionSendRun()
 }
 
 type ConCurrentEngine struct {
@@ -44,15 +50,15 @@ func (c *ConCurrentEngine) Run() {
 	defer c.db.Close()
 
 	// 区块信息
-	blockWorkerOut := make(chan types.Transaction)
 	c.scheduler.BlockRun()
 	// 交易信息
 	c.scheduler.ReceiptRun()
+	// 归集信息
+	c.scheduler.CollectionSendRun()
 
 	// 批量创建区块worker
-	for i := uint64(0); i < c.config.BlockCount; i++ {
-		c.createBlockWorker(blockWorkerOut)
-	}
+	blockWorkerOut := make(chan types.Transaction)
+	c.createBlockWorker(blockWorkerOut)
 
 	// 批量创建交易worker
 	for i := uint64(0); i < c.config.ReceiptCount; i++ {
@@ -61,11 +67,29 @@ func (c *ConCurrentEngine) Run() {
 
 	c.scheduler.BlockSubmit(c.config.BlockInit)
 
-	for {
-		transaction := <-blockWorkerOut
-		//log.Info().Msgf("交易：%v", transaction)
-		c.scheduler.ReceiptSubmit(transaction)
+	go func() {
+		for {
+			transaction := <-blockWorkerOut
+			//log.Info().Msgf("交易：%v", transaction)
+			c.scheduler.ReceiptSubmit(transaction)
+		}
+	}()
+
+	// 启动归集
+	collectionWorkerOut := make(chan db.WalletItem)
+	c.createCollectionWorker(collectionWorkerOut)
+
+	// 启动归集发送worker
+	for i := uint64(0); i < c.config.CollectionCount; i++ {
+		c.createCollectionSendWorker()
 	}
+
+	go func() {
+		for {
+			collectionSend := <-collectionWorkerOut
+			c.scheduler.CollectionSendSubmit(collectionSend)
+		}
+	}()
 
 }
 
@@ -144,6 +168,44 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 	}()
 }
 
+// createCollectionWorker 创建归集Worker
+func (c *ConCurrentEngine) createCollectionWorker(out chan db.WalletItem) {
+	go func() {
+		for {
+			<-time.After(time.Duration(c.config.CollectionAfterTime) * time.Second)
+			list, err := c.db.ListWallet(c.config.WalletPrefix)
+			if err != nil {
+				continue
+			}
+			for _, item := range list {
+				out <- item
+			}
+		}
+	}()
+}
+
+// collectionSendWorker 创建归集发送交易的worker
+func (c *ConCurrentEngine) createCollectionSendWorker() {
+	in := c.scheduler.CollectionSendWorkerChan()
+	go func() {
+		for {
+			c.scheduler.CollectionSendWorkerReady(in)
+			collectionSend := <-in
+			balance, err := c.Worker.getBalance(collectionSend.Address)
+			if err != nil {
+				continue
+			}
+			if balance.Cmp(big.NewInt(int64(c.config.CollectionMax))) >= 0 {
+				// 开始归集
+				_, err := c.Worker.sendTransaction(collectionSend.PrivateKey, c.config.CollectionAddress, balance)
+				if err != nil {
+					continue
+				}
+			}
+		}
+	}()
+}
+
 // CreateWallet 创建钱包
 func (c *ConCurrentEngine) CreateWallet() (string, error) {
 	wallet, err := c.Worker.createWallet()
@@ -167,7 +229,7 @@ func (c *ConCurrentEngine) DeleteWallet(address string) error {
 // Withdraw 提现
 func (c *ConCurrentEngine) Withdraw(orderId string, toAddress string, value int64) (string, error) {
 
-	hash, err := c.Worker.sendTransaction(c.config.WithdrawPrivateKey, toAddress, value)
+	hash, err := c.Worker.sendTransaction(c.config.WithdrawPrivateKey, toAddress, big.NewInt(value))
 	if err != nil {
 		return "", err
 	}

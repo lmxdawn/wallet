@@ -1,13 +1,15 @@
 package scheduler
 
 import (
+	"github.com/lmxdawn/wallet/db"
 	"github.com/lmxdawn/wallet/types"
 )
 
 // SimpleScheduler 简单的调度器
 type SimpleScheduler struct {
-	blockNum chan uint64            // 区块的通道
-	receipt  chan types.Transaction // 交易的通道
+	blockNum       chan uint64            // 区块的通道
+	receipt        chan types.Transaction // 交易的通道
+	collectionSend chan db.WalletItem
 }
 
 func NewSimpleScheduler() *SimpleScheduler {
@@ -46,4 +48,21 @@ func (s *SimpleScheduler) ReceiptSubmit(t types.Transaction) {
 
 func (s *SimpleScheduler) ReceiptRun() {
 	s.receipt = make(chan types.Transaction)
+}
+
+func (s *SimpleScheduler) CollectionSendWorkerChan() chan db.WalletItem {
+	return s.collectionSend
+}
+
+func (s *SimpleScheduler) CollectionSendWorkerReady(chan db.WalletItem) {
+}
+
+func (s *SimpleScheduler) CollectionSendSubmit(c db.WalletItem) {
+	go func() {
+		s.collectionSend <- c
+	}()
+}
+
+func (s *SimpleScheduler) CollectionSendRun() {
+	s.collectionSend = make(chan db.WalletItem)
 }

@@ -50,4 +50,9 @@ $ wallet -c config/config.yml
 
 > `script/Generate MyPOJOs.groovy` 生成数据库Model
 
+# 合约相关
 > `solcjs.cmd --version` 查看版本
+> 
+> `solcjs.cmd --abi erc20.sol`
+> 
+> `abigen --abi=erc20_sol_IERC20.abi --pkg=eth --out=erc20.go`

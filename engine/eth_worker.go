@@ -6,12 +6,14 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/lmxdawn/wallet/client"
+	"github.com/lmxdawn/wallet/contracts/eth"
 	"github.com/lmxdawn/wallet/types"
 	"math/big"
 	"strings"
@@ -166,6 +168,31 @@ func (e *EthWorker) getTokenTransaction(num uint64) ([]types.Transaction, uint64
 	return transactions, toBlock, nil
 }
 
+func (e *EthWorker) getBalance(address string) (*big.Int, error) {
+
+	// 如果不是合约
+	account := common.HexToAddress(address)
+	if e.contract == "" {
+		balance, err := e.http.BalanceAt(context.Background(), account, nil)
+		if err != nil {
+			return nil, err
+		}
+		return balance, nil
+	} else {
+		tokenAddress := common.HexToAddress(e.contract)
+		instance, err := eth.NewToken(tokenAddress, e.http)
+		if err != nil {
+			return nil, err
+		}
+		balance, err := instance.BalanceOf(&bind.CallOpts{}, account)
+		if err != nil {
+			return nil, err
+		}
+		return balance, nil
+	}
+
+}
+
 func (e *EthWorker) createWallet() (*types.Wallet, error) {
 	privateKey, err := crypto.GenerateKey()
 	if err != nil {
@@ -195,7 +222,7 @@ func (e *EthWorker) createWallet() (*types.Wallet, error) {
 }
 
 // sendTransaction 创建并发送裸交易
-func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amount int64) (string, error) {
+func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, value *big.Int) (string, error) {
 
 	privateKey, err := crypto.HexToECDSA(privateKeyStr)
 	if err != nil {
@@ -214,7 +241,6 @@ func (e *EthWorker) sendTransaction(privateKeyStr string, toAddress string, amou
 		return "", err
 	}
 
-	value := big.NewInt(amount) // in wei (1 eth)
 	var gasLimit uint64
 	gasLimit = uint64(80000) // in units
 	gasPrice, err := e.http.SuggestGasPrice(context.Background())

@@ -14,7 +14,7 @@ import (
 func Start(isSwag bool, configPath string) {
 
 	conf, err := config.NewConfig(configPath)
-	fmt.Println(conf)
+
 	if err != nil || len(conf.Engines) == 0 {
 		panic("Failed to load configuration")
 	}
@@ -30,9 +30,14 @@ func Start(isSwag bool, configPath string) {
 
 	// 启动监听器
 	for _, currentEngine := range engines {
-		go currentEngine.Run()
+		currentEngine.Run()
 	}
 
+	if isSwag {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	server := gin.Default()
 
 	// 中间件

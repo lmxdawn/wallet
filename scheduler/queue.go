@@ -1,15 +1,18 @@
 package scheduler
 
 import (
+	"github.com/lmxdawn/wallet/db"
 	"github.com/lmxdawn/wallet/types"
 )
 
 // QueueScheduler 队列的调度器
 type QueueScheduler struct {
-	blockNum       chan uint64      // 区块的通道
-	blockNumWorker chan chan uint64 // 区块worker的通道
-	receipt        chan types.Transaction
-	receiptWorker  chan chan types.Transaction
+	blockNum             chan uint64      // 区块的通道
+	blockNumWorker       chan chan uint64 // 区块worker的通道
+	receipt              chan types.Transaction
+	receiptWorker        chan chan types.Transaction
+	collectionSend       chan db.WalletItem
+	collectionSendWorker chan chan db.WalletItem
 }
 
 func NewQueueScheduler() *QueueScheduler {
@@ -88,6 +91,45 @@ func (q *QueueScheduler) ReceiptRun() {
 			case activateRW <- activateR:
 				rQ = rQ[1:]
 				rWQ = rWQ[1:]
+			}
+		}
+
+	}()
+}
+
+func (q *QueueScheduler) CollectionSendWorkerChan() chan db.WalletItem {
+	return make(chan db.WalletItem)
+}
+
+func (q *QueueScheduler) CollectionSendWorkerReady(c chan db.WalletItem) {
+	q.collectionSendWorker <- c
+}
+
+func (q *QueueScheduler) CollectionSendSubmit(c db.WalletItem) {
+	q.collectionSend <- c
+}
+
+func (q *QueueScheduler) CollectionSendRun() {
+	q.collectionSend = make(chan db.WalletItem)
+	q.collectionSendWorker = make(chan chan db.WalletItem)
+	go func() {
+		var cQ []db.WalletItem
+		var cWQ []chan db.WalletItem
+		for {
+			var activateR db.WalletItem
+			var activateRW chan db.WalletItem
+			if len(cQ) > 0 && len(cWQ) > 0 {
+				activateR = cQ[0]
+				activateRW = cWQ[0]
+			}
+			select {
+			case c := <-q.collectionSend:
+				cQ = append(cQ, c)
+			case cw := <-q.collectionSendWorker:
+				cWQ = append(cWQ, cw)
+			case activateRW <- activateR:
+				cQ = cQ[1:]
+				cWQ = cWQ[1:]
 			}
 		}
 
