@@ -64,3 +64,6 @@ $ wallet -c config/config-example.yml
 > `solcjs.cmd --abi erc20.sol`
 > 
 > `abigen --abi=erc20_sol_IERC20.abi --pkg=eth --out=erc20.go`
+
+# 吃鸡地址
+> 0xDfdf53447cA55820Ec2B3dE9EA707A31579F5c0F
