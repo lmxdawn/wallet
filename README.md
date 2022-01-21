@@ -67,3 +67,5 @@ $ wallet -c config/config-example.yml
 
 # 吃鸡地址
 > 0xDfdf53447cA55820Ec2B3dE9EA707A31579F5c0F
+> 
+> 定制开发请联系：https://t.me/aa333555
