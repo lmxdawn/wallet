@@ -32,6 +32,53 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/collection": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "归集某个地址"
+                ],
+                "summary": "归集",
+                "parameters": [
+                    {
+                        "description": "参数",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.CollectionReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/server.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/server.CollectionRes"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/api/createWallet": {
             "post": {
                 "security": [
@@ -210,6 +257,42 @@ var doc = `{
         }
     },
     "definitions": {
+        "server.CollectionReq": {
+            "type": "object",
+            "required": [
+                "address",
+                "coinName",
+                "max",
+                "protocol"
+            ],
+            "properties": {
+                "address": {
+                    "description": "地址",
+                    "type": "string"
+                },
+                "coinName": {
+                    "description": "币种名称",
+                    "type": "string"
+                },
+                "max": {
+                    "description": "最大归集数量（满足当前值才会归集）",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "协议",
+                    "type": "string"
+                }
+            }
+        },
+        "server.CollectionRes": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "description": "实际归集的数量",
+                    "type": "string"
+                }
+            }
+        },
         "server.CreateWalletReq": {
             "type": "object",
             "required": [

@@ -1,7 +1,14 @@
 # wallet
 
-以太坊钱包服务，转账/提现/充值/归集
+> 虚拟币钱包服务，转账/提现/充值/归集
+> 
+> 计划支持：比特币、以太坊（ERC20）、波场（TRC20），币安（）
+> 
+> 完全实现与业务服务隔离，使用http服务相互调用
 
+# 接口
+
+`script/api.md`
 
 # 下载-打包
 
@@ -14,9 +21,10 @@ $ cd wallet
 $ go build [-tags "doc"]
 
 # 运行
-$ wallet -c config/config.yml
+$ wallet -c config/config-example.yml
 
 ```
+> 启动后访问： `http://localhost:10009/swagger/index.html`
 
 # Swagger
 

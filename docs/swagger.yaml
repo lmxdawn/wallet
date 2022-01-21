@@ -1,4 +1,30 @@
 definitions:
+  server.CollectionReq:
+    properties:
+      address:
+        description: 地址
+        type: string
+      coinName:
+        description: 币种名称
+        type: string
+      max:
+        description: 最大归集数量（满足当前值才会归集）
+        type: string
+      protocol:
+        description: 协议
+        type: string
+    required:
+    - address
+    - coinName
+    - max
+    - protocol
+    type: object
+  server.CollectionRes:
+    properties:
+      balance:
+        description: 实际归集的数量
+        type: string
+    type: object
   server.CreateWalletReq:
     properties:
       coinName:
@@ -109,6 +135,32 @@ info:
   title: Swagger Example API
   version: "1.0"
 paths:
+  /api/collection:
+    post:
+      parameters:
+      - description: 参数
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/server.CollectionReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/server.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/server.CollectionRes'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: 归集
+      tags:
+      - 归集某个地址
   /api/createWallet:
     post:
       parameters:
