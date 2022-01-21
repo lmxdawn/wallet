@@ -35,6 +35,11 @@ type WithdrawRes struct {
 	Hash string `json:"hash"` // 生成的交易hash
 }
 
+// CollectionRes ...
+type CollectionRes struct {
+	Balance string `json:"balance"` // 实际归集的数量
+}
+
 // TransactionReceiptRes ...
 type TransactionReceiptRes struct {
 	Status int `json:"status"` // 交易状态（0：未成功，1：已成功）

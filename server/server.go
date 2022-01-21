@@ -50,6 +50,7 @@ func Start(isSwag bool, configPath string) {
 		auth.POST("/createWallet", CreateWallet)
 		auth.POST("/delWallet", DelWallet)
 		auth.POST("/withdraw", Withdraw)
+		auth.POST("/collection", Collection)
 		auth.GET("/getTransactionReceipt", GetTransactionReceipt)
 	}
 

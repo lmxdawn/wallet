@@ -22,7 +22,7 @@ type EngineConfig struct {
 	ReceiptAfterTime    uint64 `yaml:"receipt_after_time"`    // 获取交易信息的等待时间
 	CollectionAfterTime uint64 `yaml:"collection_after_time"` // 归集等待时间
 	CollectionCount     uint64 `yaml:"collection_count"`      // 归集发送worker数量
-	CollectionMax       uint64 `yaml:"collection_max"`        // 最大的归集数量（满足多少才归集）
+	CollectionMax       string `yaml:"collection_max"`        // 最大的归集数量（满足多少才归集，为0表示不自动归集）
 	CollectionAddress   string `yaml:"collection_address"`    // 归集地址
 	Confirms            uint64 `yaml:"confirms"`              // 确认数量
 	RechargeNotifyUrl   string `yaml:"recharge_notify_url"`   // 充值通知回调地址

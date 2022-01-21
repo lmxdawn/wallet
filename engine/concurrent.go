@@ -92,21 +92,29 @@ func (c *ConCurrentEngine) Run() {
 		}
 	}()
 
-	// 启动归集
-	collectionWorkerOut := make(chan db.WalletItem)
-	c.createCollectionWorker(collectionWorkerOut)
-
-	// 启动归集发送worker
-	for i := uint64(0); i < c.config.CollectionCount; i++ {
-		c.createCollectionSendWorker()
+	n := new(big.Int)
+	collectionMax, ok := n.SetString(c.config.CollectionMax, 10)
+	if ok {
+		panic("setString: error")
 	}
+	// 配置大于0才去自动归集
+	if collectionMax.Cmp(big.NewInt(0)) > 0 {
+		// 启动归集
+		collectionWorkerOut := make(chan db.WalletItem)
+		c.createCollectionWorker(collectionWorkerOut)
 
-	go func() {
-		for {
-			collectionSend := <-collectionWorkerOut
-			c.scheduler.CollectionSendSubmit(collectionSend)
+		// 启动归集发送worker
+		for i := uint64(0); i < c.config.CollectionCount; i++ {
+			c.createCollectionSendWorker(collectionMax)
 		}
-	}()
+
+		go func() {
+			for {
+				collectionSend := <-collectionWorkerOut
+				c.scheduler.CollectionSendSubmit(collectionSend)
+			}
+		}()
+	}
 
 }
 
@@ -207,25 +215,53 @@ func (c *ConCurrentEngine) createCollectionWorker(out chan db.WalletItem) {
 }
 
 // collectionSendWorker 创建归集发送交易的worker
-func (c *ConCurrentEngine) createCollectionSendWorker() {
+func (c *ConCurrentEngine) createCollectionSendWorker(max *big.Int) {
 	in := c.scheduler.CollectionSendWorkerChan()
 	go func() {
 		for {
 			c.scheduler.CollectionSendWorkerReady(in)
 			collectionSend := <-in
-			balance, err := c.Worker.getBalance(collectionSend.Address)
+			_, err := c.collection(collectionSend.Address, collectionSend.PrivateKey, max)
 			if err != nil {
 				continue
 			}
-			if balance.Cmp(big.NewInt(int64(c.config.CollectionMax))) >= 0 {
-				// 开始归集
-				_, err := c.Worker.sendTransaction(collectionSend.PrivateKey, c.config.CollectionAddress, balance)
-				if err != nil {
-					continue
-				}
-			}
 		}
 	}()
+}
+
+// 归集
+func (c ConCurrentEngine) collection(address, privateKey string, max *big.Int) (*big.Int, error) {
+	balance, err := c.Worker.getBalance(address)
+	if err != nil {
+		return nil, err
+	}
+	if balance.Cmp(max) < 0 {
+		return big.NewInt(0), nil
+	}
+
+	// 开始归集
+	_, err = c.Worker.sendTransaction(privateKey, c.config.CollectionAddress, balance)
+	if err != nil {
+		return nil, err
+	}
+	return balance, nil
+}
+
+// Collection 归集某个地址
+func (c *ConCurrentEngine) Collection(address string, max *big.Int) (*big.Int, error) {
+
+	// 查询地址是否存在
+	privateKey, err := c.db.Get(c.config.WalletPrefix + address)
+	if err != nil {
+		return nil, err
+	}
+
+	balance, err := c.collection(address, privateKey, max)
+	if err != nil {
+		return nil, err
+	}
+
+	return balance, nil
 }
 
 // CreateWallet 创建钱包

@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/lmxdawn/wallet/engine"
+	"math/big"
 )
 
 // CreateWallet ...
@@ -108,6 +109,48 @@ func Withdraw(c *gin.Context) {
 	}
 
 	res := WithdrawRes{Hash: hash}
+
+	APIResponse(c, nil, res)
+}
+
+// Collection ...
+// @Tags 归集某个地址
+// @Summary 归集
+// @Produce json
+// @Security ApiKeyAuth
+// @Param login body CollectionReq true "参数"
+// @Success 200 {object} Response{data=server.CollectionRes}
+// @Router /api/collection [post]
+func Collection(c *gin.Context) {
+
+	var q CollectionReq
+
+	if err := c.ShouldBindJSON(&q); err != nil {
+		HandleValidatorError(c, err)
+		return
+	}
+
+	v, ok := c.Get(q.Protocol + q.CoinName)
+	if !ok {
+		APIResponse(c, ErrEngine, nil)
+		return
+	}
+
+	currentEngine := v.(*engine.ConCurrentEngine)
+
+	n := new(big.Int)
+	max, ok := n.SetString(q.Max, 10)
+	if !ok {
+		APIResponse(c, InternalServerError, nil)
+		return
+	}
+	balance, err := currentEngine.Collection(q.Address, max)
+	if err != nil {
+		APIResponse(c, err, nil)
+		return
+	}
+
+	res := CollectionRes{Balance: balance.String()}
 
 	APIResponse(c, nil, res)
 }
