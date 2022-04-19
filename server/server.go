@@ -30,7 +30,7 @@ func Start(isSwag bool, configPath string) {
 
 	// 启动监听器
 	for _, currentEngine := range engines {
-		currentEngine.Run()
+		go currentEngine.Run()
 	}
 
 	if isSwag {

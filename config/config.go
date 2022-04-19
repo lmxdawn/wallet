@@ -10,6 +10,7 @@ type AppConfig struct {
 
 type EngineConfig struct {
 	Contract            string `yaml:"contract"`              // 合约地址（为空表示主币）
+	ContractType        string `yaml:"contract_type"`         // 合约类型（波场需要区分是TRC20还是TRC10）
 	Protocol            string `yaml:"protocol"`              // 协议名称
 	CoinName            string `yaml:"coin_name"`             // 币种名称
 	Rpc                 string `yaml:"rpc"`                   // rpc配置

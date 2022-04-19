@@ -51,19 +51,19 @@ func (c *ConCurrentEngine) Run() {
 	// 关闭连接
 	defer c.db.Close()
 
+	go c.blockLoop()
+	go c.collectionLoop()
+
+	select {}
+}
+
+// blockLoop 区块循环监听
+func (c *ConCurrentEngine) blockLoop() {
 	// 读取当前区块
 	blockNumber := c.config.BlockInit
 	blockNumberStr, err := c.db.Get("block_number")
-	if err != nil {
-		nowBlockNumber, err := c.Worker.GetNowBlockNum()
-		if err == nil {
-			blockNumber = nowBlockNumber
-		}
-	} else {
-		blockNumberTmp, err := strconv.Atoi(blockNumberStr)
-		if err == nil {
-			blockNumber = uint64(blockNumberTmp)
-		}
+	if err == nil && blockNumberStr != "" {
+		blockNumber, _ = strconv.ParseUint(blockNumberStr, 10, 64)
 	}
 
 	// 区块信息
@@ -91,10 +91,13 @@ func (c *ConCurrentEngine) Run() {
 			c.scheduler.ReceiptSubmit(transaction)
 		}
 	}()
+}
 
+// collectionLoop 归集循环监听
+func (c *ConCurrentEngine) collectionLoop() {
 	n := new(big.Int)
 	collectionMax, ok := n.SetString(c.config.CollectionMax, 10)
-	if ok {
+	if !ok {
 		panic("setString: error")
 	}
 	// 配置大于0才去自动归集
@@ -115,7 +118,6 @@ func (c *ConCurrentEngine) Run() {
 			}
 		}()
 	}
-
 }
 
 // createBlockWorker 创建获取区块信息的工作
@@ -127,8 +129,8 @@ func (c *ConCurrentEngine) createBlockWorker(out chan types.Transaction) {
 			num := <-in
 			log.Info().Msgf("获取区块：%d", num)
 			transactions, blockNum, err := c.Worker.GetTransaction(num)
-			if err != nil {
-				log.Info().Msgf("wait %d seconds, the latest block is not obtained", c.config.BlockAfterTime)
+			if err != nil || blockNum == num {
+				log.Info().Msgf("等待%d秒，无法获取最新的块", c.config.BlockAfterTime)
 				<-time.After(time.Duration(c.config.BlockAfterTime) * time.Second)
 				c.scheduler.BlockSubmit(num)
 				continue
@@ -155,7 +157,7 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 			transaction := <-in
 			err := c.Worker.GetTransactionReceipt(&transaction)
 			if err != nil {
-				log.Info().Msgf("wait %d seconds, the receipt information is invalid, err: %v", c.config.ReceiptAfterTime, err)
+				log.Info().Msgf("等待%d秒，收据信息无效, err: %v", c.config.ReceiptAfterTime, err)
 				<-time.After(time.Duration(c.config.ReceiptAfterTime) * time.Second)
 				c.scheduler.ReceiptSubmit(transaction)
 				continue
@@ -324,6 +326,11 @@ func NewEngine(config config.EngineConfig) (*ConCurrentEngine, error) {
 	switch config.Protocol {
 	case "eth":
 		worker, err = NewEthWorker(config.Confirms, config.Contract, config.Rpc)
+		if err != nil {
+			return nil, err
+		}
+	case "trx":
+		worker, err = NewTronWorker(config.Confirms, config.Contract, config.ContractType, config.Rpc)
 		if err != nil {
 			return nil, err
 		}

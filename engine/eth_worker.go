@@ -47,12 +47,6 @@ func NewEthWorker(confirms uint64, contract string, url string) (*EthWorker, err
 	}, nil
 }
 
-type TokenTransfer struct {
-	From  common.Address
-	To    common.Address
-	Value *big.Int
-}
-
 // GetNowBlockNum 获取最新块
 func (e *EthWorker) GetNowBlockNum() (uint64, error) {
 
@@ -93,10 +87,21 @@ func (e *EthWorker) GetTransactionReceipt(transaction *types.Transaction) error 
 
 // GetTransaction 获取交易信息
 func (e *EthWorker) GetTransaction(num uint64) ([]types.Transaction, uint64, error) {
+	nowBlockNumber, err := e.GetNowBlockNum()
+	if err != nil {
+		return nil, num, err
+	}
+	toBlock := num + 100
+	// 传入的num为0，表示最新块
+	if num == 0 {
+		toBlock = nowBlockNumber
+	} else if toBlock > nowBlockNumber {
+		toBlock = nowBlockNumber
+	}
 	if e.token == "" {
 		return e.getBlockTransaction(num)
 	} else {
-		return e.getTokenTransaction(num)
+		return e.getTokenTransaction(num, toBlock)
 	}
 
 }
@@ -128,8 +133,8 @@ func (e *EthWorker) getBlockTransaction(num uint64) ([]types.Transaction, uint64
 			BlockNumber: big.NewInt(int64(num)),
 			BlockHash:   block.Hash().Hex(),
 			Hash:        tx.Hash().Hex(),
-			From:        strings.ToLower(msg.From().Hex()),
-			To:          strings.ToLower(tx.To().Hex()),
+			From:        msg.From().Hex(),
+			To:          tx.To().Hex(),
 			Value:       tx.Value(),
 		})
 	}
@@ -137,9 +142,8 @@ func (e *EthWorker) getBlockTransaction(num uint64) ([]types.Transaction, uint64
 }
 
 // getTokenTransaction 获取代币的交易信息
-func (e *EthWorker) getTokenTransaction(num uint64) ([]types.Transaction, uint64, error) {
+func (e *EthWorker) getTokenTransaction(num uint64, toBlock uint64) ([]types.Transaction, uint64, error) {
 	contractAddress := common.HexToAddress(e.token)
-	toBlock := num + 100
 	query := ethereum.FilterQuery{
 		FromBlock: big.NewInt(int64(num)),
 		ToBlock:   big.NewInt(int64(toBlock)),
@@ -157,9 +161,13 @@ func (e *EthWorker) getTokenTransaction(num uint64) ([]types.Transaction, uint64
 		switch vLog.Topics[0] {
 		case e.tokenTransferEventHash:
 
-			var tokenTransferEvent TokenTransfer
+			tokenTransfer := struct {
+				From  common.Address
+				To    common.Address
+				Value *big.Int
+			}{}
 
-			err = e.tokenAbi.UnpackIntoInterface(&tokenTransferEvent, "Transfer", vLog.Data)
+			err = e.tokenAbi.UnpackIntoInterface(&tokenTransfer, "Transfer", vLog.Data)
 			if err != nil {
 				continue
 			}
@@ -170,7 +178,7 @@ func (e *EthWorker) getTokenTransaction(num uint64) ([]types.Transaction, uint64
 				Hash:        vLog.TxHash.Hex(),
 				From:        strings.ToLower(common.HexToAddress(vLog.Topics[1].Hex()).Hex()),
 				To:          strings.ToLower(common.HexToAddress(vLog.Topics[2].Hex()).Hex()),
-				Value:       tokenTransferEvent.Value,
+				Value:       tokenTransfer.Value,
 			})
 		}
 	}
@@ -231,7 +239,7 @@ func (e *EthWorker) CreateWallet() (*types.Wallet, error) {
 }
 
 // GetAddressByPrivateKey 根据私钥获取地址
-func (e EthWorker) GetAddressByPrivateKey(privateKeyStr string) (string, error) {
+func (e *EthWorker) GetAddressByPrivateKey(privateKeyStr string) (string, error) {
 
 	privateKey, err := crypto.HexToECDSA(privateKeyStr)
 	if err != nil {
@@ -277,7 +285,7 @@ func (e *EthWorker) Transfer(privateKeyStr string, toAddress string, value *big.
 		contractTransferHash := crypto.Keccak256Hash(contractTransferHashSig)
 		toAddressTmp := common.HexToAddress(toAddress)
 		toAddressHex := &toAddressTmp
-		data, err = makeERC20TransferData(contractTransferHash, toAddressHex, value)
+		data, err = makeEthERC20TransferData(contractTransferHash, toAddressHex, value)
 		if err != nil {
 			return "", "", 0, err
 		}
@@ -369,7 +377,7 @@ func (e *EthWorker) TransactionMethod(hash string) ([]byte, error) {
 	return data[0:4], nil
 }
 
-func makeERC20TransferData(contractTransferHash common.Hash, toAddress *common.Address, amount *big.Int) ([]byte, error) {
+func makeEthERC20TransferData(contractTransferHash common.Hash, toAddress *common.Address, amount *big.Int) ([]byte, error) {
 	var data []byte
 	data = append(data, contractTransferHash[:4]...)
 	paddedAddress := common.LeftPadBytes(toAddress.Bytes(), 32)

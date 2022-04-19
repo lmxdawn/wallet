@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 	"github.com/lmxdawn/wallet/engine"
 	"math/big"
@@ -68,6 +69,8 @@ func DelWallet(c *gin.Context) {
 
 	currentEngine := v.(*engine.ConCurrentEngine)
 
+	q.Address = common.HexToAddress(q.Address).Hex()
+
 	err := currentEngine.DeleteWallet(q.Address)
 	if err != nil {
 		APIResponse(c, ErrCreateWallet, nil)
@@ -101,6 +104,8 @@ func Withdraw(c *gin.Context) {
 	}
 
 	currentEngine := v.(*engine.ConCurrentEngine)
+
+	q.Address = common.HexToAddress(q.Address).Hex()
 
 	hash, err := currentEngine.Withdraw(q.OrderId, q.Address, q.Value)
 	if err != nil {
@@ -144,6 +149,9 @@ func Collection(c *gin.Context) {
 		APIResponse(c, InternalServerError, nil)
 		return
 	}
+
+	q.Address = common.HexToAddress(q.Address).Hex()
+
 	balance, err := currentEngine.Collection(q.Address, max)
 	if err != nil {
 		APIResponse(c, err, nil)
