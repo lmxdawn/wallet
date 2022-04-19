@@ -223,6 +223,8 @@ func (c *ConCurrentEngine) createCollectionSendWorker(max *big.Int) {
 			collectionSend := <-in
 			_, err := c.collection(collectionSend.Address, collectionSend.PrivateKey, max)
 			if err != nil {
+				// 归集失败，重新加入归集队列
+				c.scheduler.CollectionSendSubmit(collectionSend)
 				continue
 			}
 		}
