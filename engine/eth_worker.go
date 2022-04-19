@@ -11,7 +11,6 @@ import (
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/lmxdawn/wallet/client"
 	"github.com/lmxdawn/wallet/types"
 	"math/big"
 	"strings"
@@ -26,7 +25,10 @@ type EthWorker struct {
 }
 
 func NewEthWorker(confirms uint64, contract string, url string) (*EthWorker, error) {
-	http := client.NewEthClient(url)
+	http, err := ethclient.Dial(url)
+	if err != nil {
+		return nil, err
+	}
 
 	tokenTransferEventHashSig := []byte("Transfer(address,address,uint256)")
 	tokenTransferEventHash := crypto.Keccak256Hash(tokenTransferEventHashSig)
