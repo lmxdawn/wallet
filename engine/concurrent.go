@@ -13,12 +13,12 @@ import (
 )
 
 type Worker interface {
-	getNowBlockNum() (uint64, error)
-	getTransaction(uint64) ([]types.Transaction, uint64, error)
-	getTransactionReceipt(*types.Transaction) error
-	getBalance(address string) (*big.Int, error)
-	createWallet() (*types.Wallet, error)
-	sendTransaction(string, string, *big.Int) (string, error)
+	GetNowBlockNum() (uint64, error)
+	GetTransaction(num uint64) ([]types.Transaction, uint64, error)
+	GetTransactionReceipt(*types.Transaction) error
+	GetBalance(address string) (*big.Int, error)
+	CreateWallet() (*types.Wallet, error)
+	Transfer(privateKeyStr string, toAddress string, value *big.Int, nonce uint64) (string, string, uint64, error)
 }
 
 type Scheduler interface {
@@ -55,7 +55,7 @@ func (c *ConCurrentEngine) Run() {
 	blockNumber := c.config.BlockInit
 	blockNumberStr, err := c.db.Get("block_number")
 	if err != nil {
-		nowBlockNumber, err := c.Worker.getNowBlockNum()
+		nowBlockNumber, err := c.Worker.GetNowBlockNum()
 		if err == nil {
 			blockNumber = nowBlockNumber
 		}
@@ -126,7 +126,7 @@ func (c *ConCurrentEngine) createBlockWorker(out chan types.Transaction) {
 			c.scheduler.BlockWorkerReady(in)
 			num := <-in
 			log.Info().Msgf("获取区块：%d", num)
-			transactions, blockNum, err := c.Worker.getTransaction(num)
+			transactions, blockNum, err := c.Worker.GetTransaction(num)
 			if err != nil {
 				log.Info().Msgf("wait %d seconds, the latest block is not obtained", c.config.BlockAfterTime)
 				<-time.After(time.Duration(c.config.BlockAfterTime) * time.Second)
@@ -153,7 +153,7 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 		for {
 			c.scheduler.ReceiptWorkerReady(in)
 			transaction := <-in
-			err := c.Worker.getTransactionReceipt(&transaction)
+			err := c.Worker.GetTransactionReceipt(&transaction)
 			if err != nil {
 				log.Info().Msgf("wait %d seconds, the receipt information is invalid, err: %v", c.config.ReceiptAfterTime, err)
 				<-time.After(time.Duration(c.config.ReceiptAfterTime) * time.Second)
@@ -231,7 +231,7 @@ func (c *ConCurrentEngine) createCollectionSendWorker(max *big.Int) {
 
 // 归集
 func (c ConCurrentEngine) collection(address, privateKey string, max *big.Int) (*big.Int, error) {
-	balance, err := c.Worker.getBalance(address)
+	balance, err := c.Worker.GetBalance(address)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +240,7 @@ func (c ConCurrentEngine) collection(address, privateKey string, max *big.Int) (
 	}
 
 	// 开始归集
-	_, err = c.Worker.sendTransaction(privateKey, c.config.CollectionAddress, balance)
+	_, _, _, err = c.Worker.Transfer(privateKey, c.config.CollectionAddress, balance, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +266,7 @@ func (c *ConCurrentEngine) Collection(address string, max *big.Int) (*big.Int, e
 
 // CreateWallet 创建钱包
 func (c *ConCurrentEngine) CreateWallet() (string, error) {
-	wallet, err := c.Worker.createWallet()
+	wallet, err := c.Worker.CreateWallet()
 	if err != nil {
 		return "", err
 	}
@@ -287,7 +287,7 @@ func (c *ConCurrentEngine) DeleteWallet(address string) error {
 // Withdraw 提现
 func (c *ConCurrentEngine) Withdraw(orderId string, toAddress string, value int64) (string, error) {
 
-	hash, err := c.Worker.sendTransaction(c.config.WithdrawPrivateKey, toAddress, big.NewInt(value))
+	_, hash, _, err := c.Worker.Transfer(c.config.WithdrawPrivateKey, toAddress, big.NewInt(value), 0)
 	if err != nil {
 		return "", err
 	}
@@ -303,7 +303,7 @@ func (c *ConCurrentEngine) GetTransactionReceipt(hash string) (int, error) {
 		Status: 0,
 	}
 
-	err := c.Worker.getTransactionReceipt(t)
+	err := c.Worker.GetTransactionReceipt(t)
 	if err != nil {
 		return 0, err
 	}
