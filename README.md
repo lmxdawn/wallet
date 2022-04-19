@@ -1,12 +1,18 @@
 # wallet
 
 > 虚拟币钱包服务，转账/提现/充值/归集
-> 
-> 计划支持：比特币、以太坊（ERC20）、波场（TRC20），币安（BEP20）
-> 
+>
+>
 > 完全实现与业务服务隔离，使用http服务相互调用
 
-# 接口
+# 计划支持
+- [x] 以太坊（ERC20）
+- [x] 波场（TRC20）
+- [x] 币安（BEP20）
+- [ ] 比特币
+
+
+# 接口文档
 
 `script/api.md`
 
@@ -20,11 +26,47 @@ $ cd wallet
 # 打包 (-tags "doc") 可选，加上可以运行swagger
 $ go build [-tags "doc"]
 
-# 运行
+# 直接运行示例配置
 $ wallet -c config/config-example.yml
 
 ```
+
+# 重新生成配置
+
+```shell
+# 生成配置文件
+$ vim config.yml
+$ wallet -c config.yml
+
+```
+
+# 配置文件参数解释
+
+|  参数名   | 描述  |
+|  ----  | ----  |
+| coin_name  | 合约地址（为空表示主币） |
+| contract  | 合约类型（波场需要区分是TRC20还是TRC10） |
+| contract_type  | 协议名称 |
+| protocol  | 币种名称 |
+| rpc  | rpc配置 |
+| file  | db文件路径配置 |
+| wallet_prefix  | 钱包的存储前缀 |
+| hash_prefix  | 交易哈希的存储前缀 |
+| block_init  | 初始块（默认读取最新块） |
+| block_after_time  | 获取最新块的等待时间 |
+| receipt_count  | 交易凭证worker数量 |
+| receipt_after_time  | 获取交易信息的等待时间 |
+| collection_after_time  | 归集等待时间 |
+| collection_count  | 归集发送worker数量 |
+| collection_max  | 最大的归集数量（满足多少才归集，为0表示不自动归集） |
+| collection_address  | 归集地址 |
+| confirms  | 确认数量 |
+| recharge_notify_url  | 充值通知回调地址 |
+| withdraw_notify_url  | 提现通知回调地址 |
+| withdraw_private_key  | 提现的私钥地址 |
+
 > 启动后访问： `http://localhost:10009/swagger/index.html`
+
 
 # Swagger
 
@@ -59,18 +101,21 @@ $ wallet -c config/config-example.yml
 > `script/Generate MyPOJOs.groovy` 生成数据库Model
 
 # 合约相关
+
 > `solcjs.cmd --version` 查看版本
-> 
+>
 > `solcjs.cmd --abi erc20.sol`
-> 
+>
 > `abigen --abi=erc20_sol_IERC20.abi --pkg=eth --out=erc20.go`
 
 # 吃鸡地址
+
 > 0xDfdf53447cA55820Ec2B3dE9EA707A31579F5c0F
-> 
+>
 > 定制开发请联系：https://t.me/aa333555
 
 # 准备
+
 要实现这些功能首先得摸清楚我们需要完成些什么东西
 
 1. 获取最新区块
@@ -80,26 +125,33 @@ $ wallet -c config/config-example.yml
 5. 创建一个地址
 6. 签名并发送luo交易
 7. 定义接口如下
+
 ```go
 type Worker interface {
-    getNowBlockNum() (uint64, error)
-    getTransaction(uint64) ([]types.Transaction, uint64, error)
-    getTransactionReceipt(*types.Transaction) error
-    getBalance(address string) (*big.Int, error)
-    createWallet() (*types.Wallet, error)
-    sendTransaction(string, string, *big.Int) (string, error)
+getNowBlockNum() (uint64, error)
+getTransaction(uint64) ([]types.Transaction, uint64, error)
+getTransactionReceipt(*types.Transaction) error
+getBalance(address string) (*big.Int, error)
+createWallet() (*types.Wallet, error)
+sendTransaction(string, string, *big.Int) (string, error)
 }
 ```
+
 # 实现
+
 > 创建一个地址后把地址和私钥保存下来
+
 ## 进
-通过一个无限循环的服务不停的去获取最新块的交易数据，并且把交易数据都一一验证是否完成
-，这里判断数据的接收地址（to）是否属于本服务创建的钱包地址，如果是本服务的创建过的地址则判断为充值成功，**（这时逻辑服务里面需要做交易哈希做幂等）**
+
+通过一个无限循环的服务不停的去获取最新块的交易数据，并且把交易数据都一一验证是否完成 ，这里判断数据的接收地址（to）是否属于本服务创建的钱包地址，如果是本服务的创建过的地址则判断为充值成功，**（这时逻辑服务里面需要做交易哈希做幂等）**
+
 ## 出
-用户发起一笔提出操作，用户发起提出时通过服务配置的私钥来打包并签名luo交易。（私钥转到用户输入的提出地址），这里把提交的luo交易的哈希记录到服务
-通过一个无限循环的服务不停的去获取最新块的交易数据，并且把交易数据都一一验证是否完成
+
+用户发起一笔提出操作，用户发起提出时通过服务配置的私钥来打包并签名luo交易。（私钥转到用户输入的提出地址），这里把提交的luo交易的哈希记录到服务 通过一个无限循环的服务不停的去获取最新块的交易数据，并且把交易数据都一一验证是否完成
 ，这里判断交易数据的哈希是否存在于服务，如果存在则处理**（这时逻辑服务里面需要做交易哈希做幂等）**
+
 ## 归集
+
 通过定期循环服务创建的地址去转账到服务配置的归集地址里面，这里需要注意归集数量的限制，当满足固定的数量时才去归集（减少gas费）
 
 # 一个简单的示例

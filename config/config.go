@@ -14,7 +14,7 @@ type EngineConfig struct {
 	Protocol            string `yaml:"protocol"`              // 协议名称
 	CoinName            string `yaml:"coin_name"`             // 币种名称
 	Rpc                 string `yaml:"rpc"`                   // rpc配置
-	File                string `yaml:"file"`                  // db文件配置
+	File                string `yaml:"file"`                  // db文件路径配置
 	WalletPrefix        string `yaml:"wallet_prefix"`         // 钱包的存储前缀
 	HashPrefix          string `yaml:"hash_prefix"`           // 交易哈希的存储前缀
 	BlockInit           uint64 `yaml:"block_init"`            // 初始块（默认读取最新块）
@@ -29,7 +29,6 @@ type EngineConfig struct {
 	RechargeNotifyUrl   string `yaml:"recharge_notify_url"`   // 充值通知回调地址
 	WithdrawNotifyUrl   string `yaml:"withdraw_notify_url"`   // 提现通知回调地址
 	WithdrawPrivateKey  string `yaml:"withdraw_private_key"`  // 提现的私钥地址
-	Decimals            int    `yaml:"decimals"`              // 精度
 }
 
 type Config struct {
