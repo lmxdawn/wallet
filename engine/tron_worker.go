@@ -226,9 +226,10 @@ func (e *TronWorker) CreateWallet() (*types.Wallet, error) {
 	publicKeyString := hexutil.Encode(publicKeyBytes)[4:]
 
 	address := crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+	tronAddress, _ := tron.EthAddress2TronAddress(address)
 
 	return &types.Wallet{
-		Address:    address,
+		Address:    tronAddress,
 		PublicKey:  publicKeyString,
 		PrivateKey: privateKeyString,
 	}, err

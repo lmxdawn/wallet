@@ -127,7 +127,7 @@ func (c *ConCurrentEngine) createBlockWorker(out chan types.Transaction) {
 		for {
 			c.scheduler.BlockWorkerReady(in)
 			num := <-in
-			log.Info().Msgf("%v，获取区块：%d", c.config.CoinName, num)
+			log.Info().Msgf("%v，监听区块：%d", c.config.CoinName, num)
 			transactions, blockNum, err := c.Worker.GetTransaction(num)
 			if err != nil || blockNum == num {
 				log.Info().Msgf("等待%d秒，当前已是最新区块", c.config.BlockAfterTime)
@@ -166,11 +166,11 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 				log.Error().Msgf("交易失败：%v", transaction.Hash)
 				continue
 			}
-			log.Info().Msgf("交易完成：%v", transaction.Hash)
+			//log.Info().Msgf("交易完成：%v", transaction.Hash)
 
 			// 判断是否存在
 			if ok, err := c.db.Has(c.config.HashPrefix + transaction.Hash); err == nil && ok {
-				log.Info().Msgf("当前哈希存在：%v", transaction.Hash)
+				log.Info().Msgf("监听到提现事件，提现地址：%v，提现哈希：%v", transaction.To, transaction.Hash)
 				orderId, err := c.db.Get(c.config.HashPrefix + transaction.Hash)
 				if err != nil {
 					log.Error().Msgf("未查询到订单：%v, %v", transaction.Hash, err)
@@ -187,7 +187,7 @@ func (c *ConCurrentEngine) createReceiptWorker() {
 				}
 				_ = c.db.Delete(transaction.Hash)
 			} else if ok, err := c.db.Has(c.config.WalletPrefix + transaction.To); err == nil && ok {
-				log.Info().Msgf("当前地址存在：%v", transaction.To)
+				log.Info().Msgf("监听到充值事件，充值地址：%v，充值哈希：%v", transaction.To, transaction.Hash)
 				err = c.http.RechargeSuccess(transaction.Hash, transaction.Status, transaction.To, transaction.Value.Int64())
 				if err != nil {
 					log.Error().Msgf("充值回调通知失败：%v, %v", transaction.Hash, err)
