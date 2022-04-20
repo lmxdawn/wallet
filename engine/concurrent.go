@@ -127,10 +127,10 @@ func (c *ConCurrentEngine) createBlockWorker(out chan types.Transaction) {
 		for {
 			c.scheduler.BlockWorkerReady(in)
 			num := <-in
-			log.Info().Msgf("获取区块：%d", num)
+			log.Info().Msgf("%v，获取区块：%d", c.config.CoinName, num)
 			transactions, blockNum, err := c.Worker.GetTransaction(num)
 			if err != nil || blockNum == num {
-				log.Info().Msgf("等待%d秒，无法获取最新的块", c.config.BlockAfterTime)
+				log.Info().Msgf("等待%d秒，当前已是最新区块", c.config.BlockAfterTime)
 				<-time.After(time.Duration(c.config.BlockAfterTime) * time.Second)
 				c.scheduler.BlockSubmit(num)
 				continue
