@@ -44,47 +44,47 @@ engines:
     withdraw_notify_url: https://mainnet.infura.io
     withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
     # 币安链主币
-    - coin_name: BNB
-      contract:
-      contract_type:
-      protocol: eth
-      rpc: https://data-seed-prebsc-1-s1.binance.org:8545
-      file: data/bnb
-      wallet_prefix: wallet-
-      hash_prefix: hash-
-      block_init: 0
-      block_after_time: 1
-      receipt_count: 20
-      receipt_after_time: 1
-      collection_after_time: 2
-      collection_count: 10
-      collection_max: 10
-      collection_address: 0x785380b6012648d0DEeE1F66ac18657Db2240789
-      confirms: 1
-      recharge_notify_url: http://localhost:10001/api/withdraw
-      withdraw_notify_url: http://localhost:10001/api/withdraw
-      withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
-    # 币安链erc20代币
-    - coin_name: BNBTEST
-      contract: 0x5A6D132443E62acd1074184599F3d034d8B76FD9
-      contract_type: erc20
-      protocol: eth
-      rpc: https://data-seed-prebsc-1-s1.binance.org:8545
-      file: data/bnbusdt
-      wallet_prefix: wallet-
-      hash_prefix: hash-
-      block_init: 0
-      block_after_time: 1
-      receipt_count: 1
-      receipt_after_time: 1
-      collection_after_time: 1
-      collection_count: 10
-      collection_max: 15
-      collection_address: 0x785380b6012648d0DEeE1F66ac18657Db2240789
-      confirms: 1
-      recharge_notify_url: https://mainnet.infura.io
-      withdraw_notify_url: https://mainnet.infura.io
-      withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
+  - coin_name: BNB
+    contract:
+    contract_type:
+    protocol: eth
+    rpc: https://data-seed-prebsc-1-s1.binance.org:8545
+    file: data/bnb
+    wallet_prefix: wallet-
+    hash_prefix: hash-
+    block_init: 0
+    block_after_time: 1
+    receipt_count: 20
+    receipt_after_time: 1
+    collection_after_time: 2
+    collection_count: 10
+    collection_max: 10
+    collection_address: 0x785380b6012648d0DEeE1F66ac18657Db2240789
+    confirms: 1
+    recharge_notify_url: http://localhost:10001/api/withdraw
+    withdraw_notify_url: http://localhost:10001/api/withdraw
+    withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
+  # 币安链erc20代币
+  - coin_name: BNBTEST
+    contract: 0x5A6D132443E62acd1074184599F3d034d8B76FD9
+    contract_type: erc20
+    protocol: eth
+    rpc: https://data-seed-prebsc-1-s1.binance.org:8545
+    file: data/bnbusdt
+    wallet_prefix: wallet-
+    hash_prefix: hash-
+    block_init: 0
+    block_after_time: 1
+    receipt_count: 1
+    receipt_after_time: 1
+    collection_after_time: 1
+    collection_count: 10
+    collection_max: 15
+    collection_address: 0x785380b6012648d0DEeE1F66ac18657Db2240789
+    confirms: 1
+    recharge_notify_url: https://mainnet.infura.io
+    withdraw_notify_url: https://mainnet.infura.io
+    withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
   # 波场主币
   - coin_name: TRX
     contract:
