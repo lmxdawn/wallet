@@ -334,6 +334,11 @@ func NewEngine(config config.EngineConfig) (*ConCurrentEngine, error) {
 		if err != nil {
 			return nil, err
 		}
+	case "btc":
+		worker, err = NewBtcWorker(config.Confirms, config.Rpc, config.User, config.Pass, config.Rpc)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	http := client.NewHttpClient(config.Protocol, config.CoinName, config.RechargeNotifyUrl, config.WithdrawNotifyUrl)

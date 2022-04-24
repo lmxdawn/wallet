@@ -1,139 +1,163 @@
 app:
   port: 10001
 engines:
-  # 以太坊主币
-  - coin_name: ETH
+#  # 以太坊主币
+#  - coin_name: ETH
+#    contract:
+#    contract_type:
+#    protocol: eth
+#    rpc: https://ropsten.infura.io/v3/adee4ead47844d238802431fcb7683c6
+#    file: data/eth
+#    wallet_prefix: wallet-
+#    hash_prefix: hash-
+#    block_init: 0
+#    block_after_time: 1
+#    receipt_count: 20
+#    receipt_after_time: 1
+#    collection_after_time: 2
+#    collection_count: 10
+#    collection_max: 10
+#    collection_address: 0x785380b6012648d0DEeE1F66ac18657Db2240789
+#    confirms: 1
+#    recharge_notify_url: http://localhost:10001/api/withdraw
+#    withdraw_notify_url: http://localhost:10001/api/withdraw
+#    withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
+#  # 以太坊erc20代币
+#  - coin_name: TEST
+#    contract: 0xeDc4019BCBdA0f7acCBB4833ffF54d618d9b7f82
+#    contract_type: erc20
+#    protocol: eth
+#    rpc: https://ropsten.infura.io/v3/adee4ead47844d238802431fcb7683c6
+#    file: data/usdt
+#    wallet_prefix: wallet-
+#    hash_prefix: hash-
+#    block_init: 0
+#    block_after_time: 1
+#    receipt_count: 1
+#    receipt_after_time: 1
+#    collection_after_time: 1
+#    collection_count: 10
+#    collection_max: 15
+#    collection_address: 0x785380b6012648d0DEeE1F66ac18657Db2240789
+#    confirms: 1
+#    recharge_notify_url: https://mainnet.infura.io
+#    withdraw_notify_url: https://mainnet.infura.io
+#    withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
+#    # 币安链主币
+#  - coin_name: BNB
+#    contract:
+#    contract_type:
+#    protocol: eth
+#    rpc: https://data-seed-prebsc-1-s1.binance.org:8545
+#    file: data/bnb
+#    wallet_prefix: wallet-
+#    hash_prefix: hash-
+#    block_init: 0
+#    block_after_time: 1
+#    receipt_count: 20
+#    receipt_after_time: 1
+#    collection_after_time: 2
+#    collection_count: 10
+#    collection_max: 10
+#    collection_address: 0x785380b6012648d0DEeE1F66ac18657Db2240789
+#    confirms: 1
+#    recharge_notify_url: http://localhost:10001/api/withdraw
+#    withdraw_notify_url: http://localhost:10001/api/withdraw
+#    withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
+#  # 币安链erc20代币
+#  - coin_name: BNBTEST
+#    contract: 0x5A6D132443E62acd1074184599F3d034d8B76FD9
+#    contract_type: erc20
+#    protocol: eth
+#    rpc: https://data-seed-prebsc-1-s1.binance.org:8545
+#    file: data/bnbusdt
+#    wallet_prefix: wallet-
+#    hash_prefix: hash-
+#    block_init: 0
+#    block_after_time: 1
+#    receipt_count: 1
+#    receipt_after_time: 1
+#    collection_after_time: 1
+#    collection_count: 10
+#    collection_max: 15
+#    collection_address: 0x785380b6012648d0DEeE1F66ac18657Db2240789
+#    confirms: 1
+#    recharge_notify_url: https://mainnet.infura.io
+#    withdraw_notify_url: https://mainnet.infura.io
+#    withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
+#  # 波场主币
+#  - coin_name: TRX
+#    contract:
+#    contract_type:
+#    protocol: trx
+#    rpc: grpc.shasta.trongrid.io:50051
+#    file: data/trx
+#    wallet_prefix: wallet-
+#    hash_prefix: hash-
+#    block_init: 0
+#    block_after_time: 3
+#    receipt_count: 20
+#    receipt_after_time: 1
+#    collection_after_time: 2
+#    collection_count: 10
+#    collection_max: 10
+#    collection_address: TYBpNWMNHPyk1hBbY1SRr2RQebF39iFk7z
+#    confirms: 6
+#    recharge_notify_url: http://localhost:10001/api/withdraw
+#    withdraw_notify_url: http://localhost:10001/api/withdraw
+#    withdraw_private_key: a0e0ac9b3a1ee1a27411642b7ff60030887c6b78c89d498aba49adedceb4233b
+#  # 波场trc10
+#  - coin_name: BTFSTOKEN(BSN)
+#    contract: 1000252
+#    contract_type: trc10
+#    protocol: trx
+#    rpc: grpc.shasta.trongrid.io:50051
+#    file: data/trx10
+#    wallet_prefix: wallet-
+#    hash_prefix: hash-
+#    block_init: 0
+#    block_after_time: 3
+#    receipt_count: 20
+#    receipt_after_time: 1
+#    collection_after_time: 2
+#    collection_count: 10
+#    collection_max: 10
+#    collection_address: TYBpNWMNHPyk1hBbY1SRr2RQebF39iFk7z
+#    confirms: 6
+#    recharge_notify_url: http://localhost:10001/api/withdraw
+#    withdraw_notify_url: http://localhost:10001/api/withdraw
+#    withdraw_private_key: a0e0ac9b3a1ee1a27411642b7ff60030887c6b78c89d498aba49adedceb4233b
+#  # 波场trc20
+#  - coin_name: PiAToken (PiA)
+#    contract: TQKucgWL1cbAtW8vxKbwRgThw3FPmrok2t
+#    contract_type: trc20
+#    protocol: trx
+#    rpc: grpc.shasta.trongrid.io:50051
+#    file: data/trx20
+#    wallet_prefix: wallet-
+#    hash_prefix: hash-
+#    block_init: 0
+#    block_after_time: 3
+#    receipt_count: 20
+#    receipt_after_time: 1
+#    collection_after_time: 2
+#    collection_count: 10
+#    collection_max: 10
+#    collection_address: TYBpNWMNHPyk1hBbY1SRr2RQebF39iFk7z
+#    confirms: 6
+#    recharge_notify_url: http://localhost:10001/api/withdraw
+#    withdraw_notify_url: http://localhost:10001/api/withdraw
+#    withdraw_private_key: a0e0ac9b3a1ee1a27411642b7ff60030887c6b78c89d498aba49adedceb4233b
+
+  - coin_name: BTC
     contract:
     contract_type:
-    protocol: eth
-    rpc: https://ropsten.infura.io/v3/adee4ead47844d238802431fcb7683c6
-    file: data/eth
-    wallet_prefix: wallet-
-    hash_prefix: hash-
-    block_init: 0
-    block_after_time: 1
-    receipt_count: 20
-    receipt_after_time: 1
-    collection_after_time: 2
-    collection_count: 10
-    collection_max: 10
-    collection_address: 0x785380b6012648d0DEeE1F66ac18657Db2240789
-    confirms: 1
-    recharge_notify_url: http://localhost:10001/api/withdraw
-    withdraw_notify_url: http://localhost:10001/api/withdraw
-    withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
-  # 以太坊erc20代币
-  - coin_name: TEST
-    contract: 0xeDc4019BCBdA0f7acCBB4833ffF54d618d9b7f82
-    contract_type: erc20
-    protocol: eth
-    rpc: https://ropsten.infura.io/v3/adee4ead47844d238802431fcb7683c6
-    file: data/usdt
-    wallet_prefix: wallet-
-    hash_prefix: hash-
-    block_init: 0
-    block_after_time: 1
-    receipt_count: 1
-    receipt_after_time: 1
-    collection_after_time: 1
-    collection_count: 10
-    collection_max: 15
-    collection_address: 0x785380b6012648d0DEeE1F66ac18657Db2240789
-    confirms: 1
-    recharge_notify_url: https://mainnet.infura.io
-    withdraw_notify_url: https://mainnet.infura.io
-    withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
-    # 币安链主币
-  - coin_name: BNB
-    contract:
-    contract_type:
-    protocol: eth
-    rpc: https://data-seed-prebsc-1-s1.binance.org:8545
-    file: data/bnb
-    wallet_prefix: wallet-
-    hash_prefix: hash-
-    block_init: 0
-    block_after_time: 1
-    receipt_count: 20
-    receipt_after_time: 1
-    collection_after_time: 2
-    collection_count: 10
-    collection_max: 10
-    collection_address: 0x785380b6012648d0DEeE1F66ac18657Db2240789
-    confirms: 1
-    recharge_notify_url: http://localhost:10001/api/withdraw
-    withdraw_notify_url: http://localhost:10001/api/withdraw
-    withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
-  # 币安链erc20代币
-  - coin_name: BNBTEST
-    contract: 0x5A6D132443E62acd1074184599F3d034d8B76FD9
-    contract_type: erc20
-    protocol: eth
-    rpc: https://data-seed-prebsc-1-s1.binance.org:8545
-    file: data/bnbusdt
-    wallet_prefix: wallet-
-    hash_prefix: hash-
-    block_init: 0
-    block_after_time: 1
-    receipt_count: 1
-    receipt_after_time: 1
-    collection_after_time: 1
-    collection_count: 10
-    collection_max: 15
-    collection_address: 0x785380b6012648d0DEeE1F66ac18657Db2240789
-    confirms: 1
-    recharge_notify_url: https://mainnet.infura.io
-    withdraw_notify_url: https://mainnet.infura.io
-    withdraw_private_key: 61774dacba914e5675eef6c616df85c61d7c8917f56ee77f547a140f8f982d31
-  # 波场主币
-  - coin_name: TRX
-    contract:
-    contract_type:
-    protocol: trx
-    rpc: grpc.shasta.trongrid.io:50051
+    protocol: btc
+    network: MainNet
+    rpc: 127.0.0.1:18332
+    user: admin
+    pass: 123456
     file: data/trx
-    wallet_prefix: wallet-
-    hash_prefix: hash-
-    block_init: 0
-    block_after_time: 3
-    receipt_count: 20
-    receipt_after_time: 1
-    collection_after_time: 2
-    collection_count: 10
-    collection_max: 10
-    collection_address: TYBpNWMNHPyk1hBbY1SRr2RQebF39iFk7z
-    confirms: 6
-    recharge_notify_url: http://localhost:10001/api/withdraw
-    withdraw_notify_url: http://localhost:10001/api/withdraw
-    withdraw_private_key: a0e0ac9b3a1ee1a27411642b7ff60030887c6b78c89d498aba49adedceb4233b
-  # 波场trc10
-  - coin_name: BTFSTOKEN(BSN)
-    contract: 1000252
-    contract_type: trc10
-    protocol: trx
-    rpc: grpc.shasta.trongrid.io:50051
-    file: data/trx10
-    wallet_prefix: wallet-
-    hash_prefix: hash-
-    block_init: 0
-    block_after_time: 3
-    receipt_count: 20
-    receipt_after_time: 1
-    collection_after_time: 2
-    collection_count: 10
-    collection_max: 10
-    collection_address: TYBpNWMNHPyk1hBbY1SRr2RQebF39iFk7z
-    confirms: 6
-    recharge_notify_url: http://localhost:10001/api/withdraw
-    withdraw_notify_url: http://localhost:10001/api/withdraw
-    withdraw_private_key: a0e0ac9b3a1ee1a27411642b7ff60030887c6b78c89d498aba49adedceb4233b
-  # 波场trc20
-  - coin_name: PiAToken (PiA)
-    contract: TQKucgWL1cbAtW8vxKbwRgThw3FPmrok2t
-    contract_type: trc20
-    protocol: trx
-    rpc: grpc.shasta.trongrid.io:50051
-    file: data/trx20
     wallet_prefix: wallet-
     hash_prefix: hash-
     block_init: 0

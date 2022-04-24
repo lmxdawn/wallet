@@ -44,11 +44,14 @@ $ wallet -c config.yml
 
 |  参数名   | 描述  |
 |  ----  | ----  |
-| coin_name  | 合约地址（为空表示主币） |
-| contract  | 合约类型（波场需要区分是TRC20还是TRC10） |
-| contract_type  | 协议名称 |
-| protocol  | 币种名称 |
+| coin_name  | 币种名称 |
+| contract  | 合约地址（为空表示主币） |
+| contract_type  | 合约类型（波场需要区分是TRC20还是TRC10） |
+| protocol  | 协议名称 |
+| network  | 网络名称（暂时BTC协议有用{MainNet：主网，TestNet：测试网，TestNet3：测试网3，SimNet：测试网}） |
 | rpc  | rpc配置 |
+| user  | rpc用户名（没有则为空） |
+| pass  | rpc密码（没有则为空） |
 | file  | db文件路径配置 |
 | wallet_prefix  | 钱包的存储前缀 |
 | hash_prefix  | 交易哈希的存储前缀 |
