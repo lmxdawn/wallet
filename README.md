@@ -112,12 +112,6 @@ $ wallet -c config.yml
 >
 > `abigen --abi=erc20_sol_IERC20.abi --pkg=eth --out=erc20.go`
 
-# 吃鸡地址
-
-> 0xDfdf53447cA55820Ec2B3dE9EA707A31579F5c0F
->
-> 定制开发请联系：https://t.me/aa333555
-
 # 准备
 
 要实现这些功能首先得摸清楚我们需要完成些什么东西
