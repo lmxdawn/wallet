@@ -5,6 +5,12 @@
 >
 > 完全实现与业务服务隔离，使用http服务相互调用
 
+# sdk列表
+
+> go示例 `https://github.com/lmxdawn/wallet-v2-sdk-go`
+> 
+> 客户是PHP后端，特定增加一个php示例 `https://github.com/lmxdawn/wallet-v2-sdk-php`
+
 # 目前有 Pro 版本，可以在 Issues 联系我
 
 > 有 Pro 版本，更高级的钱包服务，可以wx 联系 appeth，添加时备注GitHub
