@@ -7,7 +7,7 @@
 
 # sdk列表
 
-> go示例 [https://github.com/wallet-collection](https://github.com/wallet-collection)
+> go示例 [https://github.com/orgs/wallet-collection/repositories](https://github.com/orgs/wallet-collection/repositories)
 > 
 > 客户是PHP后端，特定增加一个php示例 [https://github.com/lmxdawn/wallet-v2-sdk-php](https://github.com/lmxdawn/wallet-v2-sdk-php)
 
